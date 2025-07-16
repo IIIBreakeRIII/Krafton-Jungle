@@ -22,10 +22,12 @@ def recursion_exp(total, a, n):
     return recursion_exp(total * a, a, n - 1)
 
 # Fast Exponentiation (빠른 거듭제곱)
-def recursion_fast_exp(total, a, n):
+def recursion_fast_exp(x, n, total = 1):
 
     if n == 0:
-        return 1
+        return total
+    
+    elif n % 2 == 0:
+        return recursion_fast_exp(x * x, n // 2, total)
     else:
-        if n % 2 == 0:
-            return recursion_fast_exp(total ** (a // 2), a, n // )
+        return recursion_fast_exp(x, n - 1, total * x)

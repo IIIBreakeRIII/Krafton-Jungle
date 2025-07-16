@@ -6,3 +6,5 @@
 *.pdf
 
 function_visualizer/
+
+__pycache__/
