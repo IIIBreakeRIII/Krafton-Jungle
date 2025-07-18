@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt  # for plotting results (matplotlib.org)
 # from quick_sort import quick_sort_gen_rnd_list
 # from radix_sort import radix_sort_gen_rnd_list
 # from quick_sort_inplace import quick_sort_gen_rnd_list
-from heap_sort import heap_sort_gen_rnd_list 
+# from heap_sort import heap_sort_gen_rnd_list 
+from merge_sort import merge_sort_gen_rnd_list
 
 def measure(func, input_sizes):
     """
@@ -101,7 +102,7 @@ def main():
     #                 sieve[i] = False
     #     return [i for i, prime in enumerate(sieve) if prime and i >= 2]
 
-    times, mem_mib, mem_kib = measure(heap_sort_gen_rnd_list, input_sizes)
+    times, mem_mib, mem_kib = measure(merge_sort_gen_rnd_list, input_sizes)
     plot_results(input_sizes, times, mem_mib, mem_kib)
 
 
