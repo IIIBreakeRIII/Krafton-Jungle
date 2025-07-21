@@ -4,6 +4,8 @@
 **/._.DS_Store
 
 *.pdf
+*.o
+*.out
 
 function_visualizer/
 
