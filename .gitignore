@@ -6,6 +6,8 @@
 *.pdf
 *.o
 *.out
+*.txt
+*.m4a
 
 function_visualizer/
 meeting_notes/
