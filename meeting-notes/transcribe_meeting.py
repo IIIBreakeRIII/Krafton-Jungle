@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 model = whisper.load_model("medium")
 
-AUDIO_FILE = "20250722-CSAPP-Study.m4a"
+AUDIO_FILE = "test.m4a"
 SEGMENT_LENGTH = 60 * 1000  # 60초 (ms 단위)
 
 # 오디오 불러오기
@@ -36,8 +36,11 @@ for i in tqdm(range(total_segments), desc="진행률", unit="조각"):
 if os.path.exists("temp_chunk.mp3"):
     os.remove("temp_chunk.mp3")
 
+base_filename = os.path.splitext(os.path.basename(AUDIO_FILE))[0]
+output_filename = f"{base_filename}-whisper-script.txt"
+
 # 결과 저장
-with open("meeting1_transcript.txt", "w", encoding="utf-8") as f:
+with open(output_filename, "w", encoding="utf-8") as f:
     f.write(final_text)
 
-print("✅ 전체 회의 스크립트 저장 완료!")
+print(f"✅ 전체 회의 스크립트 저장 완료! → {output_filename}")
