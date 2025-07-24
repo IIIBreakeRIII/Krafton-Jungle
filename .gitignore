@@ -8,5 +8,6 @@
 *.out
 
 function_visualizer/
+meeting_notes/
 
 __pycache__/
