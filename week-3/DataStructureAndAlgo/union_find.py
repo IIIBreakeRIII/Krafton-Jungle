@@ -28,7 +28,6 @@ class UnionFind:
             self.parent[rootY] = rootX
         else:
             self.parent[rootY] = rootX
-            print("hello", self.parent)
             self.rank[rootX] += 1
 
         print(self.parent)
