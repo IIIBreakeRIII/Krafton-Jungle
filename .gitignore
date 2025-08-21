@@ -1,0 +1,14 @@
+*.o
+mdriver
+
+# -------------------- #
+# Add by Dev/ Paul
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+*.pdf
+*.txt
+*.m4a
+*.png
