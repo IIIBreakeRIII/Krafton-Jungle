@@ -36,6 +36,8 @@ static void *extend_heap(size_t words);
 static void *coalesce(void *bp);
 static void *find_fit(size_t asize);
 static void place(void *bp, size_t asize);
+// rover 적용
+static char *rover = NULL;
 
 // mm_init
 int mm_init(void) {
@@ -50,6 +52,9 @@ int mm_init(void) {
   heap_listp += (2 * WSIZE);
 
   if (extend_heap(CHUNKSIZE / WSIZE) == NULL) { return -1; }
+
+  // initialize rover
+  rover = (char *)heap_listp;
 
   return 0;
 }
@@ -73,7 +78,7 @@ void *mm_malloc(size_t size) {
   extendsize = MAX(asize, CHUNKSIZE);
 
   if ((bp = extend_heap(extendsize/WSIZE)) == NULL) { return NULL; }
-  
+
   place(bp, asize);
 
   return bp;
@@ -137,6 +142,10 @@ static void *coalesce(void * bp) {
     bp = PREV_BLKP(bp);
   }
 
+  if (rover && rover > (char *)bp && rover < (char *)NEXT_BLKP(bp)) {
+    rover = (char *)bp;
+  }
+
   return bp;
 }
 
@@ -152,6 +161,9 @@ static void *extend_heap(size_t words) {
   PUT(FTRP(bp), PACK(size, 0));
   PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1));
 
+  bp = coalesce(bp);
+  rover = (char *)bp;
+
   return coalesce(bp);
 }
 
@@ -166,6 +178,22 @@ static void *find_fit(size_t asize) {
   return NULL;
 }
 
+// find_fit: more efficiency way
+// static void *find_fit(size_t asize) {
+//   if (rover == NULL) rover = (char *)heap_listp;
+//   char *oldrover = rover;
+//
+//   for (; GET_SIZE(HDRP(rover)) > 0; rover = NEXT_BLKP(rover))
+//     if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
+//       return rover;
+//
+//   for (rover = (char *)heap_listp; rover < oldrover; rover = NEXT_BLKP(rover))
+//     if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
+//       return rover;
+//
+//   return NULL;
+// }
+
 // place
 static void place(void *bp, size_t asize) {
   size_t csize = GET_SIZE(HDRP(bp));
@@ -173,12 +201,14 @@ static void place(void *bp, size_t asize) {
   if ((csize - asize) >= (2 * DSIZE)) {
     PUT(HDRP(bp), PACK(asize, 1));
     PUT(FTRP(bp), PACK(asize, 1));
-
+    void *nbp = NEXT_BLKP(bp);
     PUT(HDRP(NEXT_BLKP(bp)), PACK((csize - asize), 0));
     PUT(FTRP(NEXT_BLKP(bp)), PACK((csize - asize), 0));
+    rover = (char *)nbp;
   }
   else {
     PUT(HDRP(bp), PACK(csize, 1));
     PUT(FTRP(bp), PACK(csize, 1));
+    rover = (char *)NEXT_BLKP(bp);
   }
 }
