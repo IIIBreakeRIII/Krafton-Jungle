@@ -168,31 +168,31 @@ static void *extend_heap(size_t words) {
 }
 
 // find_fit
-static void *find_fit(size_t asize) {
-  void *bp = mem_heap_lo() + 2 * WSIZE;
+// static void *find_fit(size_t asize) {
+//   void *bp = mem_heap_lo() + 2 * WSIZE;
+// 
+//   for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+//     if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) { return bp; }
+//   }
+// 
+//   return NULL;
+// }
 
-  for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
-    if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) { return bp; }
-  }
+// find_fit: more efficiency way : Next Fit
+static void *find_fit(size_t asize) {
+  if (rover == NULL) rover = (char *)heap_listp;
+  char *oldrover = rover;
+
+  for (; GET_SIZE(HDRP(rover)) > 0; rover = NEXT_BLKP(rover))
+    if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
+      return rover;
+
+  for (rover = (char *)heap_listp; rover < oldrover; rover = NEXT_BLKP(rover))
+    if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
+      return rover;
 
   return NULL;
 }
-
-// find_fit: more efficiency way
-// static void *find_fit(size_t asize) {
-//   if (rover == NULL) rover = (char *)heap_listp;
-//   char *oldrover = rover;
-//
-//   for (; GET_SIZE(HDRP(rover)) > 0; rover = NEXT_BLKP(rover))
-//     if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
-//       return rover;
-//
-//   for (rover = (char *)heap_listp; rover < oldrover; rover = NEXT_BLKP(rover))
-//     if (!GET_ALLOC(HDRP(rover)) && asize <= GET_SIZE(HDRP(rover)))
-//       return rover;
-//
-//   return NULL;
-// }
 
 // place
 static void place(void *bp, size_t asize) {
