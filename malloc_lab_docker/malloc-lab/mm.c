@@ -7,9 +7,7 @@
 #include "mm.h"
 #include "memlib.h"
 
-team_t team = {
-  "Krafton-Jungle", "Dev/ Paul", "ryu990305@gmail.com", "", ""
-};
+team_t team = { "Krafton-Jungle", "Dev/ Paul", "ryu990305@gmail.com", "", "" };
 
 // Define initial constant
 #define WSIZE 4
