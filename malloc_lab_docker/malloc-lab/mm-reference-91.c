@@ -6,7 +6,7 @@
 #include "mm.h"
 #include "memlib.h"
 
-team_t team = { "1team", "Dev/Paul", "bovik@cs.cmu.edu", "", "" };
+team_t team = { "Krafton-Jungle", "Dev/Paul", "ryu990305@gmail.com", "", "" };
 
 #define CHUNKSIZE (1<<12)
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
@@ -36,11 +36,11 @@ static void *extend_heap(size_t words);
 static void *coalesce(void *ptr);
 
 int mm_init(void) {
-  if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *)-1) return -1;
+  if ((heap_listp = mem_sbrk(4 * WSIZE)) == (void *) - 1) return -1;
   
   PUT(heap_listp, 0);
-  PUT(heap_listp + (1 * WSIZE), PACK(DSIZE,1));
-  PUT(heap_listp + (2 * WSIZE), PACK(DSIZE,1));
+  PUT(heap_listp + (1 * WSIZE), PACK(DSIZE, 1));
+  PUT(heap_listp + (2 * WSIZE), PACK(DSIZE, 1));
   PUT(heap_listp + (3 * WSIZE), PACK(0,1));
   
   heap_listp += (2 * WSIZE);
