@@ -1,4 +1,5 @@
 #include "csapp.h"
+#include <string.h>
 
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
@@ -204,6 +205,7 @@ void get_filetype(char *filename, char *filetype) {
   else if (strstr(filename, ".gif")) { strcpy(filetype, "image/gif"); }
   else if (strstr(filename, ".png")) { strcpy(filetype, "image/png"); }
   else if (strstr(filename, ".jpg")) { strcpy(filetype, "image/jpeg"); }
+  else if (strstr(filename, ".mp4")) { strcpy(filetype, "video/mp4"); }
   else { strcpy(filetype, "text/plain"); }  // 기본값
 }
 
