@@ -3,16 +3,25 @@
 int main(void)
 {
   char *buf, *p;
+  char *num1, *num2;
   char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];
   int n1 = 0, n2 = 0;
 
   // QUERY_STRING 환경 변수에서 두 개의 인자 추출
   if ((buf = getenv("QUERY_STRING")) != NULL) {
     // '&'를 기준으로 두 인자 분리 (e.g., arg1=3 & arg2=5)
-    p = strchr(buf, '&');
-    *p = '\0'; // '&'를 널 문자로 대체하여 첫 번째 인자 종료
-    strcpy(arg1, buf);       // arg1="arg1=3"
-    strcpy(arg2, p + 1);     // arg2="arg2=5"
+    // p = strchr(buf, '&');
+    // *p = '\0'; // '&'를 널 문자로 대체하여 첫 번째 인자 종료
+    // strcpy(arg1, buf);       // arg1="arg1=3"
+    // strcpy(arg2, p + 1);     // arg2="arg2=5"
+    
+    // Homework 11.10 Code
+    num1 = strchr(buf, 'num1');
+    num2 = strchr(buf, 'num2');
+    *num1 = '\0';
+    *num2 = '\0';
+    strcpy(arg1, num1 + 2);
+    strcpy(arg2, num2 + 2);
 
     // '=' 뒤의 문자열을 숫자로 변환
     n1 = atoi(strchr(arg1, '=') + 1); // n1 = 3
