@@ -192,11 +192,19 @@ void serve_static(int fd, char *filename, int filesize) {
 
   // Send response body to client
   // 파일을 메모리에 매핑하고 클라이언트에 전송
-  srcfd = Open(filename, O_RDONLY, 0); // 파일 열기
-  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // 파일 매핑
-  Close(srcfd); // 파일 디스크립터 닫기 (매핑되었으므로 OK)
-  Rio_writen(fd, srcp, filesize); // 파일 내용 전송
-  Munmap(srcp, filesize); // 매핑 해제
+  // srcfd = Open(filename, O_RDONLY, 0); // 파일 열기
+  // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // 파일 매핑
+  // Close(srcfd); // 파일 디스크립터 닫기 (매핑되었으므로 OK)
+  // Rio_writen(fd, srcp, filesize); // 파일 내용 전송
+  // Munmap(srcp, filesize); // 매핑 해제
+  
+  // Use malloc
+  srcfd = Open(filename, O_RDONLY, 0);
+  srcp = (char *)malloc(sizeof(filesize));
+  Rio_readn(srcfd, srcp, filesize);
+  Close(srcfd);
+  Rio_writen(fd, srcp, filesize);
+  free(srcp);
 }
 
 // get_filetype - Derive file type from filename
