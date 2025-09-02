@@ -4,7 +4,7 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize);
+void serve_static(int fd, char *filename, int filesize, char *method);
 void get_filetype(char *filename, char *filetype);
 void serve_dynamic(int fd, char *filename, char *cgiargs);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
@@ -63,7 +63,8 @@ void doit(int fd) {
   sscanf(buf, "%s %s %s", method, uri, version);
   
   // make error if not "GET"
-  if (strcasecmp(method, "GET")) {
+  // if not HEAD or GET -> return 501 error
+  if (strcasecmp(method, "GET") != 0 && strcasecmp(method, "HEAD") != 0) {
     clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
 
     return;
@@ -92,7 +93,7 @@ void doit(int fd) {
       return;
     }
     // serve file
-    serve_static(fd, filename, sbuf.st_size);
+    serve_static(fd, filename, sbuf.st_size, method);
   }
   // Serve dynamic content
   else {
@@ -174,10 +175,10 @@ int parse_uri(char *uri, char *filename, char *cgiargs) {
 }
 
 // 정적 컨텐츠 처리
-void serve_static(int fd, char *filename, int filesize) {
+void serve_static(int fd, char *filename, int filesize, char *method) {
   int srcfd;
   char *srcp, filetype[MAXLINE], buf[MAXBUF];
-
+  
   // Send response headers to client
   // 정적 컨텐츠 처리
   get_filetype(filename, filetype);
@@ -189,6 +190,8 @@ void serve_static(int fd, char *filename, int filesize) {
   Rio_writen(fd, buf, strlen(buf));
   printf("Response headers:\n");
   printf("%s", buf);
+
+  if (strcasecmp(method, "HEAD") == 0) { return; }
 
   // Send response body to client
   // 파일을 메모리에 매핑하고 클라이언트에 전송
