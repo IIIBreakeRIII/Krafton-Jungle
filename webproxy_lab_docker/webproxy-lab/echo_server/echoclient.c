@@ -1,4 +1,5 @@
 #include "csapp.h"
+#include <unistd.h>
 
 int main(int argc, char **argv) {
 
@@ -17,10 +18,16 @@ int main(int argc, char **argv) {
   clientfd = Open_clientfd(host, port);
   Rio_readinitb(&rio, clientfd);
 
-  while (Fgets(buf, MAXLINE, stdin) != NULL) {
-    Rio_writen(clientfd, buf, strlen(buf));
-    Rio_readlineb(&rio, buf, MAXLINE);
-    Fputs(buf, stdout);
+  // while (Fgets(buf, MAXLINE, stdin) != NULL) {
+  //   Rio_writen(clientfd, buf, strlen(buf));
+  //   읽는 과정 생략
+  //   Rio_readlineb(&rio, buf, MAXLINE);
+  //   Fputs(buf, stdout);
+
+  for (int i = 0; i < 100000; i++) {
+    char *msg = "hello\n";
+    Rio_writen(clientfd, msg, strlen(msg));
+    usleep(50); // 0.00005초 대기
   }
   
   Close(clientfd);
