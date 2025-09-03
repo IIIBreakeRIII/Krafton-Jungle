@@ -1,8 +1,4 @@
 #include <stdio.h>
-#include <signal.h>
-
-#include "csapp.h"
-#include "cache.h"
 
 /* Recommended max cache and object sizes */
 #define MAX_CACHE_SIZE 1049000
