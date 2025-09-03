@@ -24,10 +24,10 @@ int main(int argc, char **argv) {
   //   Rio_readlineb(&rio, buf, MAXLINE);
   //   Fputs(buf, stdout);
 
-  for (int i = 0; i < 100000; i++) {
-    char *msg = "hello\n";
+  for (int i = 0; i < 1000000; i++) {
+    char *msg = "This is malware. I gonna kill your all process. HA-HA\n";
     Rio_writen(clientfd, msg, strlen(msg));
-    usleep(50); // 0.00005초 대기
+    usleep(10); // 0.00001초 대기
   }
   
   Close(clientfd);
