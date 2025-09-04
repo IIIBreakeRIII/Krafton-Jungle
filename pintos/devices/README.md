@@ -1,3 +1,5 @@
+> From. [Alarm Clock KAIST Gitbook](https://casys-kaist.github.io/pintos-kaist/project1/alarm_clock.html)
+
 ## Alarm Clock
 
 ### Reimplement `timer_sleep()`, defined in `devices/timer.c`
@@ -16,9 +18,15 @@ void timer_sleep(int64_t ticks);
 
 Separate functions `timer_msleep()`, `timer_usleep()`, and `timer_nsleep()` do exist for sleeping a specific number of milliseconds, microseconds, or nanoseconds, respectively, but these will call `timer_sleep()` automatically when necessary. You do not need to modify them. The alarm clock implementation is not needed for later projects, although it could be useful for project 4.
 
+<br>
+
 ---
 
-# 알람 시계 (Alarm Clock)
+<br>
+
+> Translate to Korean
+
+## 알람 시계 (Alarm Clock)
 
 `timer_sleep()` 재구현하기
 
@@ -30,7 +38,7 @@ Separate functions `timer_msleep()`, `timer_usleep()`, and `timer_nsleep()` do e
 
 ---
 
-## 함수 원형
+### 함수 원형
 ```c
 void timer_sleep(int64_t ticks);
 ```
