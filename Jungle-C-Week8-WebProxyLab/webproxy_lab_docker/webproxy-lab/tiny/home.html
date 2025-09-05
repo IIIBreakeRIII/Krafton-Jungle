@@ -1,0 +1,30 @@
+<html>
+<head>
+  <title>test</title>
+</head>
+<body> 
+
+  <!-- 이미지 (가로 100px) -->
+  <img align="middle" src="godzilla.gif" width="100px">
+
+  <!-- 이름 -->
+  <p>Dave O'Hallaron</p>
+
+  <!-- 비디오 (가로 100px) -->
+  <video muted autoplay loop width="200px">
+    <source src="arc.mp4" type="video/mp4">
+    <strong>Your browser does not support the video tag.</strong>
+  </video>
+
+  <!-- 간단한 adder CGI 폼 -->
+  <form action="/cgi-bin/adder" method="GET">
+    <p>
+      <input type="text" name="num1" placeholder="Enter first number">
+      +
+      <input type="text" name="num2" placeholder="Enter second number">
+      <input type="submit" value="Add">
+    </p>
+  </form>
+
+</body>
+</html>
