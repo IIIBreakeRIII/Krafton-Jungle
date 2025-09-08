@@ -63,6 +63,8 @@ static void init_thread(struct thread *, const char *name, int priority);
 static void do_schedule(int status);
 static void schedule(void);
 static tid_t allocate_tid(void);
+static bool compare_t_priority(const struct list_elem *a,
+                               const struct list_elem *b, void *aux);
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
@@ -230,7 +232,8 @@ void thread_unblock(struct thread *t) {
 
   old_level = intr_disable();
   ASSERT(t->status == THREAD_BLOCKED);
-  list_push_back(&ready_list, &t->elem);
+  // list_push_back(&ready_list, &t->elem);
+  list_insert_ordered(&ready_list, &t->elem, compare_t_priority, NULL);
   t->status = THREAD_READY;
   intr_set_level(old_level);
 }
@@ -283,15 +286,21 @@ void thread_yield(void) {
   ASSERT(!intr_context());
 
   old_level = intr_disable();
-  if (curr != idle_thread)
-    list_push_back(&ready_list, &curr->elem);
+  if (curr != idle_thread) {
+    // list_push_back(&ready_list, &curr->elem);
+    list_insert_ordered(&ready_list, &curr->elem, compare_t_priority, NULL);
+  }
   do_schedule(THREAD_READY);
   intr_set_level(old_level);
 }
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
-  thread_current()->priority = new_priority;
+  struct thread *curr = thread_current();
+  curr->priority = new_priority;
+  if (curr->priority < list_entry(list_front(&ready_list),struct thread,elem)->priority) {
+    thread_yield();
+  }
 }
 
 /* Returns the current thread's priority. */
@@ -554,23 +563,10 @@ static tid_t allocate_tid(void) {
   return tid;
 }
 
-void thread_printf(struct thread *t) {
-  printf("안녕 쓰레드! tid=%d, name=%s, status=%s, priority=%d\n", t->tid,
-         t->name, thread_status_to_str(t->status), t->priority);
+/* 우선순위 비교 함수 */
+static bool compare_t_priority(const struct list_elem *a,
+                               const struct list_elem *b, void *aux) {
+  struct thread *t1 = list_entry(a, struct thread, elem);
+  struct thread *t2 = list_entry(b, struct thread, elem);
+  return t1->priority > t2->priority;
 }
-
-const char *thread_status_to_str(enum thread_status status) {
-  switch (status) {
-  case THREAD_RUNNING:
-    return "RUNNING";
-  case THREAD_READY:
-    return "READY";
-  case THREAD_BLOCKED:
-    return "BLOCKED";
-  case THREAD_DYING:
-    return "DYING";
-  default:
-    return "UNKNOWN";
-  }
-}
-

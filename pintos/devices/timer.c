@@ -127,8 +127,6 @@ static void timer_interrupt(struct intr_frame *args UNUSED) {
 
     t = list_entry(e, struct thread, elem);
     if (t->wake_up_tick <= ticks) {
-      // printf("tid = %d, name = %s, wake_up_tick = %d, status = %d\r\n", t->tid,
-      //        t->name, t->wake_up_tick, t->status);
       prev = list_prev(e);
       list_remove(e);
       thread_unblock(t);
@@ -198,8 +196,5 @@ static bool compare_wake_up_tick(const struct list_elem *a,
                                  const struct list_elem *b, void *aux) {
   struct thread *t1 = list_entry(a, struct thread, elem);
   struct thread *t2 = list_entry(b, struct thread, elem);
-  if (t1->wake_up_tick > t2->wake_up_tick) {
-    return 1;
-  }
-  return 0;
+  return t1->wake_up_tick > t2->wake_up_tick;
 }
