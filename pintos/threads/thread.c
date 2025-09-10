@@ -171,8 +171,7 @@ void thread_print_stats(void) {
    The code provided sets the new thread's `priority' member to
    PRIORITY, but no actual priority scheduling is implemented.
    Priority scheduling is the goal of Problem 1-3. */
-tid_t thread_create(const char *name, int priority, thread_func *function,
-                    void *aux) {
+tid_t thread_create(const char *name, int priority, thread_func *function, void *aux) {
   struct thread *t;
   tid_t tid;
 
@@ -200,6 +199,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function,
 
   /* Add to run queue. */
   thread_unblock(t);
+  // priority가 더 높은 스레드가 ready_list에 있다면 즉시 CPU를 양보
+  preempt_priority();
 
   return tid;
 }
@@ -234,6 +235,7 @@ void thread_unblock(struct thread *t) {
   ASSERT(t->status == THREAD_BLOCKED);
   // list_push_back(&ready_list, &t->elem);
   list_insert_ordered(&ready_list, &t->elem, compare_t_priority, NULL);
+  
   t->status = THREAD_READY;
   intr_set_level(old_level);
 }
@@ -288,19 +290,23 @@ void thread_yield(void) {
   old_level = intr_disable();
   if (curr != idle_thread) {
     // list_push_back(&ready_list, &curr->elem);
-    list_insert_ordered(&ready_list, &curr->elem, compare_t_priority, NULL);
+    list_insert_ordered(&ready_list, &curr->elem, cmp_thread_priority, NULL);
   }
+
   do_schedule(THREAD_READY);
   intr_set_level(old_level);
 }
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void thread_set_priority(int new_priority) {
-  struct thread *curr = thread_current();
-  curr->priority = new_priority;
-  if (curr->priority < list_entry(list_front(&ready_list),struct thread,elem)->priority) {
-    thread_yield();
-  }
+  // struct thread *curr = thread_current();
+  // curr->priority = new_priority;
+  // if (curr->priority < list_entry(list_front(&ready_list),struct thread,elem)->priority) {
+  //   thread_yield();
+  // }
+
+  thread_current() -> priority = new_priority;
+  preempt_priority();
 }
 
 /* Returns the current thread's priority. */
@@ -569,4 +575,45 @@ static bool compare_t_priority(const struct list_elem *a,
   struct thread *t1 = list_entry(a, struct thread, elem);
   struct thread *t2 = list_entry(b, struct thread, elem);
   return t1->priority > t2->priority;
+}
+
+// cmp_thread_priority 함수 선언 from. thread.h
+bool cmp_thread_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED) {
+  struct thread *st_a = list_entry(a, struct thread, elem);
+  struct thread *st_b = list_entry(b, struct thread, elem);
+  return st_a -> priority > st_b -> priority;
+}
+
+void thread_wakeup(int64_t current_ticks) {
+  enum intr_level old_level;
+  // 인터럽트 비활성
+  old_level = intr_disable();
+
+  struct list_elem *curr_elem = list_begin(&ready_list);
+  while (curr_elem != list_end(&ready_list)) {
+    // 현재 검사중인 elem의 스레드
+    struct thread *curr_thread = list_entry(curr_elem, struct thread, elem);
+
+    // 깰 시간이 되었으면
+    if (current_ticks >= curr_thread -> wake_up_tick) {
+      // sleep_list에서 제거, curr_elem에는 다음 elem이 담김
+      curr_elem = list_remove(curr_elem);
+      // ready_list로 이동
+      thread_unblock(curr_thread);
+      preempt_priority();
+    } else { break; }
+  }
+  // 인터럽트 상태를 원래 상태로 변경
+  intr_set_level(old_level);
+}
+
+void preempt_priority(void) {
+  if (thread_current() == idle_thread) { return; }
+
+  if (list_empty(&ready_list)) { return; }
+
+  struct thread *curr = thread_current();
+  struct thread *ready = list_entry(list_front(&ready_list), struct thread, elem);
+
+  if (curr -> priority < ready -> priority) { thread_yield(); }
 }

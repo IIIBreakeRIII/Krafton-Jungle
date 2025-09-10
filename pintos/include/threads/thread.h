@@ -145,4 +145,11 @@ void do_iret(struct intr_frame *tf);
 
 void thread_printf(struct thread *t);
 const char *thread_status_to_str(enum thread_status status);
+
+// 우선순위가 높은 스레드가 앞부분에 위치하도록 정렬할 때 사용할 정렬 함수의 새로운 선언
+bool cmp_thread_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
+
+// preempt_priority 선언
+void preempt_priority(void);
+
 #endif /* threads/thread.h */
