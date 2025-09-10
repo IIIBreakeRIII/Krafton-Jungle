@@ -53,8 +53,15 @@
     - sema -> waiters를 정렬 할 때 사용하는 cmp_thread_priority 함수는 ready_list를 정렬할 때 사용한 함수를 그대로 사용
     - cond -> waiters를 정렬할 때 사용하는 cmp_sema_priority 함수는 아래에서 새로 선언
 
-> ### cmp_sema_priority
+> #### cmp_sema_priority
 
 - cond -> waiters를 정렬할 때 사용할 함수를 새로 선언
     - 인자로 전달되는 elem으로 바로 스레드에 접근할 수 없기 때문에, 이전의 cmp_thread_priority를 쓸 수 없어서 새로 선언해야함
     - 두 세마포어 안의 'waiters'중 제일 높은 priority를 비교해서 높으면 true를 반환하는 함수
+
+> #### sema_up, cond_signal
+
+- waiters에서 스레드를 깨우기 전에 waiters 목록을 다시 한 번 정렬
+    - waiters에 들어있는 스레드가 donate를 받아 우선순위가 달라졌을 수 있기 때문
+- sema_up에서는 unblock() 함수가 호출되면서 ready_list에 스레드가 삽입 -> 우선순위가 더 높은 스레드가 ready_list에 있다면 즉시 CPU를 양보
+    - preempt_priority() 호출
