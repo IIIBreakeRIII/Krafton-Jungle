@@ -152,4 +152,7 @@ bool cmp_thread_priority(const struct list_elem *a, const struct list_elem *b, v
 // preempt_priority 선언
 void preempt_priority(void);
 
+// cmp_sema_priority 선언
+bool cmp_sema_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+
 #endif /* threads/thread.h */
