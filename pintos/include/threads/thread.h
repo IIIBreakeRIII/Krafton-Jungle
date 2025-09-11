@@ -94,6 +94,12 @@ struct thread {
   int64_t wake_up_tick;
   /* Shared between thread.c and synch.c. */
   struct list_elem elem; /* List element. */
+  
+  // donation 관련 추가
+  int init_priority;
+  struct lock *wait_on_lock;
+  struct list donations;
+  struct list_elem donation_elem;
 
 #ifdef USERPROG
   /* Owned by userprog/process.c. */
@@ -145,4 +151,23 @@ void do_iret(struct intr_frame *tf);
 
 void thread_printf(struct thread *t);
 const char *thread_status_to_str(enum thread_status status);
+
+// 우선순위가 높은 스레드가 앞부분에 위치하도록 정렬할 때 사용할 정렬 함수의 새로운 선언
+bool cmp_thread_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED);
+
+// preempt_priority 선언
+void preempt_priority(void);
+
+// cmp_sema_priority 선언
+bool cmp_sema_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+
+// cmp_donation_priority 선언
+bool cmp_donation_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+
+void donate_priority(void);
+
+void remove_donor(struct lock *lock);
+
+void update_priority_before_donations(void);
+
 #endif /* threads/thread.h */
