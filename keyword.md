@@ -118,3 +118,36 @@ _CPU가 실행되는 두 가지 권한 수준(Privilege Level)을 의미_
 - 파일 관리: `open()`, `read()`, `write()`, `close()`
 - 디바이스 관리: `ioctl()`, `read()`, `write()`
 - 통신: `socket()`, `send()`, `recv()`
+
+### 5. File Descriptor
+
+> _**정의**_
+
+- OS에서 열린 파일을 식별하기 위해 사용하는 정수값
+- 프로그램이 파일을 열면 운영체제 커널은 내부적으로 파일 객체를 생성
+    - 이를 가리키는 작은 정수를 반환
+    - 이 정수를 프로그램이 이후 read, write같은 시스템 콜에서 사용
+
+> _**특징**_
+
+- 정수 값으로 표현
+    - UNIX 계열 시스템에서 프로세스가 시작될 때 기본적으로 할당되는 디스크립터
+        - 0 : 표준 입력(Standard Input, stdin)
+        - 1 : 표준 출력(Standard Output, stdout)
+        - 2 : 표준 오류(Standard Error, stderr)
+- 추상화된 인터페이스
+    - 파일 뿐만 아니라 디바이스, 파이프, 소켓 등 다양한 I/O 자원을 동일한 방식으로 다룰 수 있음
+    - 즉, "모든 것은 파일이다"라는 유닉스 철학을 구현
+- 프로세스 단위로 관리
+    - 각 프로세스마다 File Descriptor Table이 존재
+    - 테이블의 엔트리에 파일 디스크립터 번호가 매핑되어 실제 커널 내부의 열린 파일 객체(Open File Table Entry)를 가리킴
+
+> _**동작 과정**_ 
+
+1. `fd = open("test.txt", O_RDWR);`
+    - 커널이 `test.txt`를 열고, `File Descriptor Table`에 새로운 엔트리를 추가.
+	- `open()`의 반환값으로 정수 `fd`가 제공됨.
+2. `write(fd, buffer, size);`
+	- `fd`를 인자로 넘기면, 커널이 File Descriptor Table을 참조해 해당 파일 객체를 찾아 처리.
+3. `close(fd);`
+	- 파일 디스크립터를 해제하여 자원을 반환
