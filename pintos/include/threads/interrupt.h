@@ -38,27 +38,31 @@ struct intr_frame {
 	/* Pushed by intr_entry in intr-stubs.S.
 	   These are the interrupted task's saved registers. */
 	struct gp_registers R;
-	uint16_t es;
+	uint16_t es; // 범용 세그먼트 레지스터
 	uint16_t __pad1;
 	uint32_t __pad2;
-	uint16_t ds;
+	uint16_t ds; // 데이터 세그먼트
 	uint16_t __pad3;
 	uint32_t __pad4;
 	/* Pushed by intrNN_stub in intr-stubs.S. */
+	// 인터럽트의 고유 번호입니다. 
+	// 운영체제는 이 번호를 보고 어떤 종류의 인터럽트가 발생했는지 (키보드 입력인지, 시스템 콜인지 등) 파악하고 그에 맞는 처리 루틴을 실행합니다. 
 	uint64_t vec_no; /* Interrupt vector number. */
 /* Sometimes pushed by the CPU,
    otherwise for consistency pushed as 0 by intrNN_stub.
    The CPU puts it just under `eip', but we move it here. */
+	//  일부 예외적인 인터럽트(예: 페이지 폴트)가 발생했을 때, CPU가 하드웨어적으로 에러에 대한 추가 정보를 제공합니다. 
+	// 그 외의 경우에는 0으로 채워집니다.
 	uint64_t error_code;
 /* Pushed by the CPU.
    These are the interrupted task's saved registers. */
-	uintptr_t rip;
-	uint16_t cs;
-	uint16_t __pad5;
+	uintptr_t rip; // 인터럽트 직후에 실행해야 할 명령어의 주소
+	uint16_t cs;	// 현재 실행 중인 코드의 세그먼트 정보
+	uint16_t __pad5;  
 	uint32_t __pad6;
-	uint64_t eflags;
-	uintptr_t rsp;
-	uint16_t ss;
+	uint64_t eflags; // CPU의 각종 상태 플래그. 연산 결과(양수/음수/0 등)나 CPU 제어 상태를 담고 있습니다.
+	uintptr_t rsp; // 인터럽트가 발생하기 직전의 스택의 최상단 주소.
+	uint16_t ss; // 현재 사용 중인 스택의 세그먼트 정보.
 	uint16_t __pad7;
 	uint32_t __pad8;
 } __attribute__((packed));

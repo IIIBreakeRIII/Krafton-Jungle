@@ -17,6 +17,11 @@
         "synch.h": "c",
         "flags.h": "c",
         "fixed-point.h": "c",
-        "tests.h": "c"
+        "tests.h": "c",
+        "string.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "utility": "c"
     }
 }

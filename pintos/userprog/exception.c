@@ -6,6 +6,13 @@
 #include "threads/thread.h"
 #include "intrinsic.h"
 
+/*
+ 사용자 프로세스가 특권적이거나 금지된 연산을 수행하면, 예외(exception) 또는 폴트(fault)로 커널에 트랩(trap)됩니다.
+ 이 파일들은 예외를 처리합니다. 현재 모든 예외는 단순히 메시지를 출력하고 프로세스를 종료시킵니다. 
+ 프로젝트 2의 일부 솔루션에서는 이 파일의 page_fault()를 수정해야 할 수 있습니다.
+*/
+
+
 /* Number of page faults processed. */
 static long long page_fault_cnt;
 
