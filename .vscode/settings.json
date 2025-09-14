@@ -24,5 +24,6 @@
         "initializer_list": "c",
         "utility": "c",
         "cstdlib": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

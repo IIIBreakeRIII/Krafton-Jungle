@@ -232,6 +232,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
   t->tf.ss = SEL_KDSEG;
   t->tf.cs = SEL_KCSEG;
   t->tf.eflags = FLAG_IF;
+  t->exit_status = 0;
 
   /* Add to run queue. */
   thread_unblock(t);

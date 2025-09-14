@@ -49,11 +49,13 @@ syscall_init (void) {
 void
 syscall_handler (struct intr_frame *f UNUSED) {
 	// TODO: Your implementation goes here.
-	printf ("system call!\n");
 	switch (f->R.rax) {
         case SYS_HALT:
             break;
         case SYS_EXIT:
+			int status = f->R.rdi;
+			thread_current()->exit_status = status;
+			printf("%s: exit(%d)\n", thread_current()->name, status);
 			thread_exit();
             break;
         case SYS_WRITE:  

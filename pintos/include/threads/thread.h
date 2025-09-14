@@ -108,6 +108,12 @@ struct thread {
   /* mlfqs 전용*/
   int nice;           /* CPU를 양보하는 척도 (-20~20) */
   fixed_t recent_cpu; /* 최근 CPU 사용량 (fixed-point)*/
+  
+  struct list child_list;       // 부모가 자신의 자식 스레드들을 담아둘 리스트
+  struct list_elem child_elem;  // 자식 스레드가 부모의 child_list에 연결될때 사용할 고리
+  struct semaphore wait_sema; // 부모가 자식을 기다릴 때 사용하는 세마포아
+
+  int exit_status;
 
 #ifdef USERPROG
   /* Owned by userprog/process.c. */
