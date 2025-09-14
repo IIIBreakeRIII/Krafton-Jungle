@@ -21,6 +21,11 @@
 **/output/
 # core dump
 core
+*.json
+
+select_test.sh
+.test_config
+.test_status
 
 # 임시 파일
 *~
