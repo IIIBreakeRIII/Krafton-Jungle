@@ -19,6 +19,7 @@
 #include "threads/vaddr.h"
 #include "intrinsic.h"
 #include "include/lib/kernel/stdio.h"
+// #include "include/lib/string.h"
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -175,7 +176,7 @@ process_exec (void *f_name) {
 	if (copy_name == NULL) {
 		return -1;
 	}
-	strcpy(copy_name, f_name);
+	strlcpy(copy_name, f_name, PGSIZE);
 	argv_temp[loop] = strtok_r(copy_name, delim, &save_ptr);
 
 	/* 
@@ -199,7 +200,7 @@ process_exec (void *f_name) {
 	_if.eflags = FLAG_IF | FLAG_MBS;
 
 	/* We first kill the current context */
-	process_cleanup (); // 기존 프로세스의 흔적을 지움
+	process_cleanup(); // 기존 프로세스의 흔적을 지움
 
 	/* And then load the binary */
 	while (argv_temp[loop] != NULL) {
@@ -211,13 +212,14 @@ process_exec (void *f_name) {
 	success = load (argv_temp[0], &_if); // 새로운 프로그램을 메모리에 적재함
 
 	// palloc_free_page (argv_temp[0]); // 역할: 할당된 메모리 페이지를 해제하는 함수
-	if (!success)
+	if (!success) {
+		palloc_free_page(copy_name);
 		return -1;
+	}
 
 	int argc = loop;
 	char* argv_addrs[argc];
-
-	void* rsp = (void*) USER_STACK;
+	void* rsp = (void*) _if.rsp;
 
 	for (int i = argc - 1; i >= 0; i--) {
     	int arg_len = strlen(argv_temp[i]) + 1; // 널 종단 문자 포함 길이
@@ -262,11 +264,14 @@ process_exec (void *f_name) {
 
 	palloc_free_page(copy_name);
 
+	printf("--- Stack Dump for %s ---\n", argv_temp[0]);
+    hex_dump(_if.rsp, (void *)_if.rsp, USER_STACK - _if.rsp, true);
+    printf("--- Stack Dump End ---\n");
+
 	/* Start switched process. */
 	do_iret (&_if); //역할: 새로운 프로그램으로 제어권을 넘기는 최종 스위치
 	NOT_REACHED ();
 }
-
 
 /* Waits for thread TID to die and returns its exit status.  If
  * it was terminated by the kernel (i.e. killed due to an
@@ -497,9 +502,6 @@ load (const char *file_name, struct intr_frame *if_) {
 
 	/* TODO: Your code goes here.
 	 * TODO: Implement argument passing (see project2/argument_passing.html). */
-	printf("--- Stack Dump Start ---\n");
-	hex_dump(if_->rsp, if_->rsp, 100, true);
-	printf("--- Stack Dump End ---\n");
 
 	success = true;
 
@@ -652,6 +654,7 @@ install_page (void *upage, void *kpage, bool writable) {
 	 * address, then map our page there. */
 	return (pml4_get_page (t->pml4, upage) == NULL
 			&& pml4_set_page (t->pml4, upage, kpage, writable));
+			
 }
 #else
 /* From here, codes will be used after project 3.

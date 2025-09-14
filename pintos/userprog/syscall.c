@@ -54,6 +54,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
         case SYS_HALT:
             break;
         case SYS_EXIT:
+			thread_exit();
             break;
         case SYS_WRITE:  
             // 이 안에 `write` 시스템 콜의 상세 기능을 구현합니다.
@@ -61,7 +62,7 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			int fd = f->R.rdi;
 			void* buffer = f->R.rsi;
 			unsigned size = f->R.rdx;
-
+			
             // 2. buffer 포인터가 유효한지 검사합니다.			
 			// 3. fd가 1(콘솔 출력)인지, 일반 파일인지 구분합니다.
 			if (fd == 1) {
