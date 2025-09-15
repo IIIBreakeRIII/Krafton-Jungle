@@ -23,7 +23,11 @@
         "string_view": "c",
         "initializer_list": "c",
         "utility": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "intr-stubs.h": "c",
+        "interrupt.h": "c",
+        "loader.h": "c",
+        "syscall-nr.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

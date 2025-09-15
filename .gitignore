@@ -13,6 +13,8 @@
 *.hex
 *.dis
 *.dump
+Makefile.kernel
+Makefile.userprog
 
 # 빌드 디렉터리
 **/build/

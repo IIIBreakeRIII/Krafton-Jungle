@@ -1,12 +1,10 @@
-#include "threads/thread.h"
-
 #include <debug.h>
 #include <random.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-
 #include "intrinsic.h"
+#include "threads/thread.h"
 #include "threads/fixed-point.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
@@ -250,6 +248,7 @@ void thread_block(void) {
   ASSERT(!intr_context());
   ASSERT(intr_get_level() == INTR_OFF);
   thread_current()->status = THREAD_BLOCKED;
+  
   schedule();
 }
 
@@ -571,6 +570,8 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   list_init(&t->acquired_locks);
   t->waiting_for_lock = NULL;
   t->is_donated = 0;
+
+  sema_init(&t->wait_sema, 0); // 세마 초기화
 
   /* mlfqs 멤버 초기화 */
   t->nice = 0;

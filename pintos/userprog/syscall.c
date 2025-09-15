@@ -69,12 +69,12 @@ syscall_handler (struct intr_frame *f UNUSED) {
 			// 3. fd가 1(콘솔 출력)인지, 일반 파일인지 구분합니다.
 			if (fd == 1) {
 				putbuf(buffer, size);
+				f->R.rax = size;
 			} else {
-
+				// 4. 각 상황에 맞게 데이터를 씁니다.
+				// 5. 쓴 바이트 수를 f->R.rax에 저장해서 반환합니다.
+				f->R.rax;
 			}
-            // 4. 각 상황에 맞게 데이터를 씁니다.
-            // 5. 쓴 바이트 수를 f->R.rax에 저장해서 반환합니다.
-			f->R.rax;
             break;
         default:
             break;

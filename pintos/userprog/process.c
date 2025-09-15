@@ -287,38 +287,30 @@ process_wait (tid_t child_tid UNUSED) {
 	/* XXX: Hint) The pintos exit if process_wait (initd), we recommend you
 	 * XXX:       to add infinite loop here before
 	 * XXX:       implementing the process_wait. */
-
 	struct thread* parent = thread_current();
 	struct list_elem* e;
 	struct thread* find_thread = NULL;
 
 	for (e = list_begin(&parent->child_list); e != list_end(&parent->child_list); e = list_next(e)) {
 		struct thread* child = list_entry(e, struct thread, child_elem);
-
 		if (child->tid == child_tid) {
 			find_thread = child;
 			break;
 		}
 	}
 
-	if (find_child == NULL) {
+	if (find_thread == NULL) {
 		return -1;
 	}
 
-	// struct list_elem* cur_elem = thread_current()->elem;
-	// struct thread* find_thread = NULL;
+	// 찾은 자식 스레드의 세마포어에 sema_down() 호출
+	sema_down(&find_thread->wait_sema);
 
-
-	// while (cur_elem != list_end(cur_elem)) {
-	// 	struct thread* cur = list_entry(cur_elem, struct thread, list_elem);
-	// 	if (child_tid == cur->tid) {
-	// 		find_thread = cur;
-	// 	}
-	// 	cur_elem = list_next(cur_elem);
-	// }
-
-	while (1) { }
-	return -1;
+	int status = find_thread->exit_status;
+	// wait가 끝난 자식은 부모의 목록에서 제거 list_remove()
+	list_remove(&find_thread->child_elem);
+	palloc_free_page(find_thread);
+	return status;
 }
 
 /* Exit the process. This function is called by thread_exit (). */
@@ -329,7 +321,7 @@ process_exit (void) {
 	 * TODO: Implement process termination message (see
 	 * TODO: project2/process_termination.html).
 	 * TODO: We recommend you to implement process resource cleanup here. */
-
+	sema_up(&curr->wait_sema);
 	process_cleanup ();
 }
 
