@@ -1,12 +1,10 @@
-#include "threads/thread.h"
-
 #include <debug.h>
 #include <random.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
-
 #include "intrinsic.h"
+#include "threads/thread.h"
 #include "threads/fixed-point.h"
 #include "threads/flags.h"
 #include "threads/interrupt.h"
@@ -210,6 +208,7 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
   /* Initialize thread. */
   init_thread(t, name, priority);
   tid = t->tid = allocate_tid();
+  
   list_push_back(&all_list, &t->all_elem);  // all_list에 원소 넣기
 
   if (thread_mlfqs) {  // mlfqs일 경우
@@ -232,6 +231,8 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
   t->tf.ss = SEL_KDSEG;
   t->tf.cs = SEL_KCSEG;
   t->tf.eflags = FLAG_IF;
+  t->exit_status = 0;
+
 
   /* Add to run queue. */
   thread_unblock(t);
@@ -249,6 +250,7 @@ void thread_block(void) {
   ASSERT(!intr_context());
   ASSERT(intr_get_level() == INTR_OFF);
   thread_current()->status = THREAD_BLOCKED;
+  
   schedule();
 }
 
@@ -558,6 +560,7 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   ASSERT(name != NULL);
 
   memset(t, 0, sizeof *t);
+  
   t->status = THREAD_BLOCKED;
   strlcpy(t->name, name, sizeof t->name);
   t->tf.rsp = (uint64_t)t + PGSIZE - sizeof(void *);
@@ -570,6 +573,12 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   list_init(&t->acquired_locks);
   t->waiting_for_lock = NULL;
   t->is_donated = 0;
+
+  #ifdef USERPROG
+    list_init(&t->child_list);
+    sema_init(&t->wait_sema, 0); // 세마 초기화
+    t->exit_status = 0;
+  #endif
 
   /* mlfqs 멤버 초기화 */
   t->nice = 0;

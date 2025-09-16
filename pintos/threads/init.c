@@ -86,7 +86,7 @@ main (void) {
 	mem_end = palloc_init ();
 	malloc_init ();
 	paging_init (mem_end);
-
+	
 #ifdef USERPROG
 	tss_init ();
 	gdt_init ();
@@ -97,6 +97,7 @@ main (void) {
 	timer_init ();
 	kbd_init ();
 	input_init ();
+
 #ifdef USERPROG
 	exception_init ();
 	syscall_init ();
@@ -117,7 +118,6 @@ main (void) {
 #endif
 
 	printf ("Boot complete.\n");
-
 	/* Run actions specified on kernel command line. */
 	run_actions (argv);
 

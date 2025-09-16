@@ -7,6 +7,14 @@
 #include "threads/vaddr.h"
 #include "intrinsic.h"
 
+/*
+TSS(Task-State Segment)는 x86 아키텍처의 태스크 스위칭에 사용되었습니다. 
+하지만 x86-64에서는 태스크 스위칭이 더 이상 사용되지 않습니다(deprecated). 
+그럼에도 불구하고, TSS는 링(ring) 전환 중에 스택 포인터를 찾는 데 여전히 사용됩니다.
+이는 사용자 프로세스가 인터럽트 핸들러에 진입할 때, 하드웨어가 커널의 스택 포인터를 찾기 위해 TSS를 참조한다는 의미입니다. 
+어떤 프로젝트에서도 이 파일들을 수정할 필요는 없습니다. TSS가 어떻게 작동하는지에 관심이 있다면 코드를 읽어볼 수 있습니다.
+*/
+
 /* The Task-State Segment (TSS).
  *
  *  Instances of the TSS, an x86-64 specific structure, are used to
