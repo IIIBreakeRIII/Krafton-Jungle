@@ -7,6 +7,7 @@
 
 #include "threads/fixed-point.h"
 #include "threads/interrupt.h"
+#include "threads/synch.h"
 
 #ifdef VM
 #include "vm/vm.h"
@@ -87,6 +88,12 @@ typedef int tid_t;
  * only because they are mutually exclusive: only a thread in the
  * ready state is on the run queue, whereas only a thread in the
  * blocked state is on a semaphore wait list. */
+
+// struct child_process {
+// 	tid_t tid;
+
+// }
+
 struct thread {
   /* Owned by thread.c. */
   tid_t tid;                 /* Thread identifier. */
@@ -111,7 +118,7 @@ struct thread {
   
   struct list child_list;       // 부모가 자신의 자식 스레드들을 담아둘 리스트
   struct list_elem child_elem;  // 자식 스레드가 부모의 child_list에 연결될때 사용할 고리
-  struct semaphore* wait_sema; // 부모가 자식을 기다릴 때 사용하는 세마포어
+  struct semaphore wait_sema; // 부모가 자식을 기다릴 때 사용하는 세마포어
 
   int exit_status;
 

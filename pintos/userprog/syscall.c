@@ -11,6 +11,7 @@
 
 void syscall_entry (void);
 void syscall_handler (struct intr_frame *);
+bool is_valid_user_buffer(void *buffer, unsigned size);
 
 /*
 	사용자 프로세스가 커널 기능에 접근하고자 할 때마다 시스템 콜을 호출합니다. 
@@ -68,8 +69,10 @@ syscall_handler (struct intr_frame *f UNUSED) {
             // 2. buffer 포인터가 유효한지 검사합니다.			
 			// 3. fd가 1(콘솔 출력)인지, 일반 파일인지 구분합니다.
 			if (fd == 1) {
-				putbuf(buffer, size);
-				f->R.rax = size;
+				if (is_valid_user_buffer(buffer, size)) {
+					putbuf(buffer, size);
+					f->R.rax = size;
+				}
 			} else {
 				// 4. 각 상황에 맞게 데이터를 씁니다.
 				// 5. 쓴 바이트 수를 f->R.rax에 저장해서 반환합니다.
@@ -81,4 +84,32 @@ syscall_handler (struct intr_frame *f UNUSED) {
     }
 
 	// thread_exit ();
+}
+
+
+// buffer부터 size 바이트까지의 모든 주소가 유효한지 확인하는 함수
+bool is_valid_user_buffer(void *buffer, unsigned size) {
+	bool flag = true;
+
+    // 1. buffer 시작 주소가 유효한지 확인
+	// 2. buffer + size - 1 끝 주소가 유효한지 확인
+	if (buffer == NULL || !is_user_vaddr(buffer)|| !is_user_vaddr(buffer + size - 1)) {
+		return false;
+	}
+
+    // 3. 그 사이의 모든 페이지들이 매핑되어 있는지 반복문으로 확인
+    //    (pml4_get_page를 사용)
+	void *current_page = pg_round_down(buffer); // 시작 페이지 계산
+    void *end_page = pg_round_down(buffer + size - 1); // 끝 페이지 계산
+
+    while (current_page <= end_page) {
+        // 3. 각 페이지가 실제 메모리에 매핑되었는지 확인
+        if (pml4_get_page(thread_current()->pml4, current_page) == NULL) {
+            return false; // 매핑되지 않았으면 실패
+        }
+        current_page += PGSIZE; // 다음 페이지로 이동
+    }
+    
+    // 모든 검사를 통과하면 true, 하나라도 실패하면 false 반환
+	return true;
 }

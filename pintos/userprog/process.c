@@ -170,14 +170,14 @@ process_exec (void *f_name) {
 	char *save_ptr;
 	char *delim = " ";
 	char *argv_temp[128];
-	int loop = 0;
+	int argc = 0;
 
 	char* copy_name = palloc_get_page(PAL_ZERO);
 	if (copy_name == NULL) {
 		return -1;
 	}
 	strlcpy(copy_name, f_name, PGSIZE);
-	argv_temp[loop] = strtok_r(copy_name, delim, &save_ptr);
+	argv_temp[argc] = strtok_r(copy_name, delim, &save_ptr);
 
 	/* 
 	1. 변수 준비: 인자의 개수(argc)와, 스택에 저장될 문자열들의 주소를 잠시 담아둘 argv_addrs 배열을 준비합니다.
@@ -203,30 +203,23 @@ process_exec (void *f_name) {
 	process_cleanup(); // 기존 프로세스의 흔적을 지움
 
 	/* And then load the binary */
-	while (argv_temp[loop] != NULL) {
-		loop++;
-		argv_temp[loop] = strtok_r(NULL, delim, &save_ptr);
+	while (argv_temp[argc] != NULL) {
+		argc++;
+		argv_temp[argc] = strtok_r(NULL, delim, &save_ptr);
 	}
 
+	// argc 값을 rdi에 설정
+	_if.R.rdi = argc;
 	/* If load failed, quit. */
 	success = load (argv_temp[0], &_if); // 새로운 프로그램을 메모리에 적재함
 
-	// palloc_free_page (argv_temp[0]); // 역할: 할당된 메모리 페이지를 해제하는 함수
 	if (!success) {
-		palloc_free_page(copy_name);
+		palloc_free_page(argv_temp[0]);
 		return -1;
 	}
 
-	int argc = loop;
-	char* argv_addrs[argc];
 	void* rsp = (void*) _if.rsp;
-
-	for (int i = argc - 1; i >= 0; i--) {
-    	int arg_len = strlen(argv_temp[i]) + 1; // 널 종단 문자 포함 길이
-    	rsp -= arg_len; // 스택 포인터를 문자열 길이만큼 내림
-    	memcpy(rsp, argv_temp[i], arg_len); // 해당 위치에 문자열 복사
-    	argv_addrs[i] = rsp; // 복사된 문자열의 주소를 기록
-	}
+	char* argv_addrs[argc];
 
 	// 3. 워드 정렬 (Word Align)
 	// rsp를 8의 배수로 맞추기 위해 패딩(padding)을 추가
@@ -234,6 +227,14 @@ process_exec (void *f_name) {
 	if (padding != 0) {
 		rsp -= padding;
 		memset(rsp, 0, padding); // 빈 공간을 0으로 채움
+	}
+
+	
+	for (int i = argc - 1; i >= 0; i--) {
+		int arg_len = strlen(argv_temp[i]) + 1; // 널 종단 문자 포함 길이
+    	rsp -= arg_len; // 스택 포인터를 문자열 길이만큼 내림
+    	memcpy(rsp, argv_temp[i], arg_len); // 해당 위치에 문자열 복사
+    	argv_addrs[i] = rsp; // 복사된 문자열의 주소를 기록
 	}
 
 	// 4. 문자열 주소(포인터) 쌓기
@@ -249,10 +250,7 @@ process_exec (void *f_name) {
 
 	// 5. 최종 인자 및 가짜 반환 주소 쌓기
 	// 이제 rsp는 argv 배열의 시작 주소를 가리킴. 이 값을 rsi에 설정.
-	_if.R.rsi = (uint64_t) rsp;
-
-	// argc 값을 rdi에 설정
-	_if.R.rdi = argc;
+	_if.R.rsi = (uint64_t) rsp; 
 
 	// 가짜 반환 주소(0)를 추가
 	rsp -= sizeof(void *);
@@ -261,7 +259,7 @@ process_exec (void *f_name) {
 	// 6. 최종 rsp 설정
 	// 모든 작업이 끝난 후의 rsp 값을 intr_frame에 최종 설정
 	_if.rsp = (uint64_t) rsp;
-
+	
 	palloc_free_page(copy_name);
 
 	printf("--- Stack Dump for %s ---\n", argv_temp[0]);
@@ -305,11 +303,11 @@ process_wait (tid_t child_tid UNUSED) {
 
 	// 찾은 자식 스레드의 세마포어에 sema_down() 호출
 	sema_down(&find_thread->wait_sema);
-
 	int status = find_thread->exit_status;
 	// wait가 끝난 자식은 부모의 목록에서 제거 list_remove()
 	list_remove(&find_thread->child_elem);
 	palloc_free_page(find_thread);
+
 	return status;
 }
 
