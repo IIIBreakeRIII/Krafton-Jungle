@@ -38,5 +38,8 @@ select_test.sh
 
 .test_status
 
+# CRLF
 activate
-utils/pintos
+utils/*
+.devcontainer/Dockerfile
+**/test/
