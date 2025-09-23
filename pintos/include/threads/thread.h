@@ -153,6 +153,13 @@ struct thread {
   /* 파일 디스크립터 테이블 */
   struct file **fd_table;   // fd_table[fd_idx] = &file
   int fd_idx;
+
+  /* for rox */
+  struct file *excute_file;
+
+  /* fork */
+  struct intr_frame parent_if;
+  struct semaphore fork_sema;
 };
 
 /* If false (default), use round-robin scheduler.
@@ -198,5 +205,7 @@ void mlfqs_update_priority(struct thread *t);
 bool thread_priority_less(const struct list_elem *, const struct list_elem *, void *);
 bool is_not_idle(struct thread *);
 int max_priority_mlfqs_queue(void);
+
+struct thread *thread_get_by_tid (tid_t tid);
 
 #endif /* threads/thread.h */

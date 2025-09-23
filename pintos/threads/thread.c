@@ -74,6 +74,7 @@ static void do_schedule(int status);
 static void schedule(void);
 static tid_t allocate_tid(void);
 static void thread_update_recent_cpu(struct thread *t);
+struct thread *thread_get_by_tid (tid_t tid);
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
@@ -603,6 +604,10 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   t->already_waited = false;
 
   t->fd_table = NULL;
+
+  t->excute_file = NULL;
+
+  sema_init(&t->fork_sema, 0);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
@@ -822,3 +827,18 @@ int max_priority_mlfqs_queue(void) {  // mlfqs에서 존재하는 ready_thread �
 }
 
 bool is_not_idle(struct thread *t) { return t != idle_thread; }
+
+struct thread *thread_get_by_tid (tid_t tid) {
+    enum intr_level old_level = intr_disable();
+
+    for (struct list_elem *e = list_begin(&all_list); 
+         e != list_end(&all_list); 
+         e = list_next (e)) 
+    {
+        struct thread *t = list_entry (e, struct thread, all_elem);
+        if (t->tid == tid) return t;
+    }
+
+    intr_set_level(old_level);
+    return NULL;
+}

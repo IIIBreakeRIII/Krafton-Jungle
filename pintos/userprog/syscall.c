@@ -51,8 +51,13 @@ void close (int fd);
 #define MSR_LSTAR 0xc0000082        /* Long mode SYSCALL target */
 #define MSR_SYSCALL_MASK 0xc0000084 /* Mask for the eflags */
 
+// 파일 시스템 접근용 락
+struct lock file_lock;
+
 void
 syscall_init (void) {
+	lock_init (&file_lock);
+
 	write_msr(MSR_STAR, ((uint64_t)SEL_UCSEG - 0x10) << 48  |
 			((uint64_t)SEL_KCSEG) << 32);
 	write_msr(MSR_LSTAR, (uint64_t) syscall_entry);
@@ -245,9 +250,12 @@ read (int fd, void *buffer, unsigned size)
 		return -1;
 	} else {
 		struct file *file = find_file_by_fd (fd);
-		if (file == NULL)
+		if (file == NULL) {
 			return -1;
+		}
+		lock_acquire (&file_lock);
 		read_bytes = file_read (file, buffer, size);
+		lock_release (&file_lock);
 	}
 	return read_bytes;
 }
@@ -255,21 +263,24 @@ read (int fd, void *buffer, unsigned size)
 int
 write (int fd, const void *buffer, unsigned size) {
 	check_addr (buffer);
-
+	
 	int write_bytes = 0;
-
+	lock_acquire (&file_lock);
 	if (fd == 0) {
+		lock_release (&file_lock);
 		return -1;
 	} else if (fd == 1) {
 		putbuf (buffer, size);	// console.c 참고
-		return size;
+		write_bytes = size;
 	} else {
 		struct file *file = find_file_by_fd (fd);
-		if (file == NULL)
+		if (file == NULL) {
+			lock_release (&file_lock);
 			return -1;
-
+		}
 		write_bytes = file_write (file, buffer, size);
 	}
+	lock_release (&file_lock);
 	return write_bytes;
 }
 

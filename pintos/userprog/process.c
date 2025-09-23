@@ -35,7 +35,7 @@ static void
 process_init (void) {
 	struct thread *curr = thread_current ();
 
-	    // FDT_PAGE 개수만큼 페이지를 0으로 할당
+	// FDT_PAGE 개수만큼 페이지를 0으로 할당
     curr->fd_table = palloc_get_multiple(PAL_ZERO, FDT_PAGE);
     if (curr->fd_table == NULL) {
         // 메모리 부족 시 적절히 종료
@@ -95,9 +95,21 @@ initd (void *f_name) {
  * TID_ERROR if the thread cannot be created. */
 tid_t
 process_fork (const char *name, struct intr_frame *if_) {
+	struct thread *curr = thread_current ();
+	memcpy (&curr->parent_if, if_, sizeof (struct intr_frame));
+	
 	/* Clone current thread to new thread.*/
-	return thread_create (name,
-			PRI_DEFAULT, __do_fork, thread_current ());
+	tid_t tid = thread_create (name, PRI_DEFAULT, __do_fork, curr);
+	if (tid == TID_ERROR) {
+		return TID_ERROR;
+	}
+
+	struct thread *child = thread_get_by_tid (tid);
+	if (child == NULL) return TID_ERROR;
+
+	sema_down (&child->fork_sema);
+
+	return tid;
 }
 
 #ifndef VM
@@ -112,21 +124,34 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	bool writable;
 
 	/* 1. TODO: If the parent_page is kernel page, then return immediately. */
+	if (is_kernel_vaddr (va)) {
+		return true;
+	}
 
 	/* 2. Resolve VA from the parent's page map level 4. */
 	parent_page = pml4_get_page (parent->pml4, va);
+	if (parent_page == NULL) {
+		return false;
+	}
 
 	/* 3. TODO: Allocate new PAL_USER page for the child and set result to
 	 *    TODO: NEWPAGE. */
+	newpage = palloc_get_page (PAL_USER);
+	if (newpage == NULL) {
+		return false;
+	}
 
 	/* 4. TODO: Duplicate parent's page to the new page and
 	 *    TODO: check whether parent's page is writable or not (set WRITABLE
 	 *    TODO: according to the result). */
+	memcpy (newpage, parent_page, PGSIZE);
+	writable = is_writable (pte);
 
 	/* 5. Add new page to child's page table at address VA with WRITABLE
 	 *    permission. */
 	if (!pml4_set_page (current->pml4, va, newpage, writable)) {
 		/* 6. TODO: if fail to insert page, do error handling. */
+		return false;
 	}
 	return true;
 }
@@ -142,11 +167,12 @@ __do_fork (void *aux) {
 	struct thread *parent = (struct thread *) aux;
 	struct thread *current = thread_current ();
 	/* TODO: somehow pass the parent_if. (i.e. process_fork()'s if_) */
-	struct intr_frame *parent_if;
+	struct intr_frame *parent_if = &parent->parent_if;
 	bool succ = true;
 
 	/* 1. Read the cpu context to local stack. */
 	memcpy (&if_, parent_if, sizeof (struct intr_frame));
+	if_.R.rax = 0;	// fork 시스템 콜 호출 시 자식 프로세스에서의 반환값
 
 	/* 2. Duplicate PT */
 	current->pml4 = pml4_create();
@@ -171,11 +197,29 @@ __do_fork (void *aux) {
 
 	process_init ();
 
+	// 부모의 파일 디스크립터 복제
+	for (int i = 0; i < FDCOUNT_LIMIT; i++) {
+		struct file *parent_file = parent->fd_table[i];
+		
+		if (parent_file == NULL) {
+			continue;
+		}
+
+		struct file *child_file = file_duplicate (parent_file);
+		current->fd_table[i] = child_file;
+	}
+	current->fd_idx = parent->fd_idx;
+
+	sema_up (&current->fork_sema);
+
 	/* Finally, switch to the newly created process. */
 	if (succ)
 		do_iret (&if_);
+
 error:
-	thread_exit ();
+	current->exit_status = TID_ERROR;
+	sema_up (&current->fork_sema);
+	exit (TID_ERROR);
 }
 
 /* Switch the current execution context to the f_name.
@@ -281,6 +325,12 @@ process_exit (void) {
 	if (curr->parent != NULL) {              // 부모가 있을 때만
 		sema_up(&curr->wait_sema);           // 부모의 process_wait 깨우기
 		sema_down(&curr->exit_sema);         // 부모가 상태 읽을 때까지 대기
+	}
+
+	if (curr->excute_file != NULL) {
+		file_allow_write(curr->excute_file);
+		file_close(curr->excute_file);
+		curr->excute_file = NULL;
 	}
 
 	process_cleanup ();
@@ -414,6 +464,8 @@ load (const char *file_name, struct intr_frame *if_) {
 		printf ("load: %s: open failed\n", pure_fn);
 		goto done;
 	}
+	t->excute_file = file;
+	file_deny_write (file);
 
 	/* Read and verify executable header. */
 	if (file_read (file, &ehdr, sizeof ehdr) != sizeof ehdr
@@ -552,7 +604,7 @@ load (const char *file_name, struct intr_frame *if_) {
 
 done:
 	/* We arrive here whether the load is successful or not. */
-	file_close (file);
+	// file_close (file); <- rox 구현에 방해, process_exit 에서 닫자
 
 	free(fn_copy);
 
