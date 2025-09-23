@@ -40,6 +40,6 @@ select_test.sh
 
 # CRLF
 activate
-utils/*
 .devcontainer/Dockerfile
+**/utils/*
 **/test/
