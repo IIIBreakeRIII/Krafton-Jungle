@@ -13,6 +13,10 @@
 #include "vm/vm.h"
 #endif
 
+/* Userprog 피일 시스템 관련 */
+#define FDT_PAGE 3
+#define FDCOUNT_LIMIT FDT_PAGE*(1<<9)
+
 /* States in a thread's life cycle. */
 enum thread_status {
   THREAD_RUNNING, /* Running thread. */
@@ -115,12 +119,6 @@ struct thread {
   /* mlfqs 전용*/
   int nice;           /* CPU를 양보하는 척도 (-20~20) */
   fixed_t recent_cpu; /* 최근 CPU 사용량 (fixed-point)*/
-  
-  struct list child_list;       // 부모가 자신의 자식 스레드들을 담아둘 리스트
-  struct list_elem child_elem;  // 자식 스레드가 부모의 child_list에 연결될때 사용할 고리
-  struct semaphore wait_sema; // 부모가 자식을 기다릴 때 사용하는 세마포어
-
-  int exit_status;
 
 #ifdef USERPROG
   /* Owned by userprog/process.c. */
@@ -134,6 +132,27 @@ struct thread {
   /* Owned by thread.c. */
   struct intr_frame tf; /* Information for switching */
   unsigned magic;       /* Detects stack overflow. */
+
+  /* exit status */
+  int exit_status;
+
+  /* parent thread */
+  struct thread *parent;
+
+  /* child list */
+  struct list child_list;
+  struct list_elem child_elem;
+
+  /* sync for perent & child process */
+  struct semaphore wait_sema;   // 자식이 종료될 때까지 대기
+  struct semaphore exit_sema;   // 부모가 자식의 종료 메시지를 읽을 때까지 대기
+
+  /* 이전 wait 여부 체크용*/
+  bool already_waited;
+
+  /* 파일 디스크립터 테이블 */
+  struct file **fd_table;   // fd_table[fd_idx] = &file
+  int fd_idx;
 };
 
 /* If false (default), use round-robin scheduler.
