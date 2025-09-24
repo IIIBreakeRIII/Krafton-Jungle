@@ -94,7 +94,7 @@ initd (void *f_name) {
 /* Clones the current process as `name`. Returns the new process's thread id, or
  * TID_ERROR if the thread cannot be created. */
 tid_t
-process_fork (const char *name, struct intr_frame *if_) {
+process_fork (const char *name, struct intr_frame *if_ UNUSED) {
 	struct thread *curr = thread_current ();
 	memcpy (&curr->parent_if, if_, sizeof (struct intr_frame));
 	
@@ -106,6 +106,11 @@ process_fork (const char *name, struct intr_frame *if_) {
 
 	struct thread *child = thread_get_by_tid (tid);
 	if (child == NULL) return TID_ERROR;
+
+	if (child->exit_status == TID_ERROR) {
+		sema_up (&child->exit_sema);
+		return TID_ERROR;
+	}
 
 	sema_down (&child->fork_sema);
 
@@ -151,6 +156,7 @@ duplicate_pte (uint64_t *pte, void *va, void *aux) {
 	 *    permission. */
 	if (!pml4_set_page (current->pml4, va, newpage, writable)) {
 		/* 6. TODO: if fail to insert page, do error handling. */
+		palloc_free_page (newpage);
 		return false;
 	}
 	return true;
@@ -209,6 +215,8 @@ __do_fork (void *aux) {
 		current->fd_table[i] = child_file;
 	}
 	current->fd_idx = parent->fd_idx;
+
+	current->excute_file = NULL;
 
 	sema_up (&current->fork_sema);
 
@@ -322,24 +330,24 @@ process_exit (void) {
 		child->parent = NULL;
 	}
 
+	process_cleanup ();
+
 	if (curr->parent != NULL) {              // 부모가 있을 때만
 		sema_up(&curr->wait_sema);           // 부모의 process_wait 깨우기
 		sema_down(&curr->exit_sema);         // 부모가 상태 읽을 때까지 대기
 	}
-
-	if (curr->excute_file != NULL) {
-		file_allow_write(curr->excute_file);
-		file_close(curr->excute_file);
-		curr->excute_file = NULL;
-	}
-
-	process_cleanup ();
 }
 
 /* Free the current process's resources. */
 static void
 process_cleanup (void) {
 	struct thread *curr = thread_current ();
+
+	if (curr->excute_file != NULL) {
+		file_allow_write(curr->excute_file);
+		file_close(curr->excute_file);
+		curr->excute_file = NULL;
+	}
 
 #ifdef VM
 	supplemental_page_table_kill (&curr->spt);
