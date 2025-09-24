@@ -37,3 +37,9 @@ select_test.sh
 .DS_Store
 
 .test_status
+
+# CRLF
+activate
+.devcontainer/Dockerfile
+**/utils/*
+**/test/

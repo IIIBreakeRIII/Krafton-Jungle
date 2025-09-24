@@ -74,6 +74,7 @@ static void do_schedule(int status);
 static void schedule(void);
 static tid_t allocate_tid(void);
 static void thread_update_recent_cpu(struct thread *t);
+struct thread *thread_get_by_tid (tid_t tid);
 
 /* Returns true if T appears to point to a valid thread. */
 #define is_thread(t) ((t) != NULL && (t)->magic == THREAD_MAGIC)
@@ -220,6 +221,13 @@ tid_t thread_create(const char *name, int priority, thread_func *function, void 
     }
     mlfqs_update_priority(t);  // priority 공식으로 계산
   }
+
+  // 부모 프로세스 및 자식 리스트 초기화
+#ifdef USERPROG
+  struct thread *parent = thread_current();
+  t->parent = parent;
+  list_push_back(&parent->child_list, &t->child_elem);
+#endif
 
   /* Call the kernel_thread if it scheduled.
    * Note) rdi is 1st argument, and rsi is 2nd argument. */
@@ -583,6 +591,23 @@ static void init_thread(struct thread *t, const char *name, int priority) {
   /* mlfqs 멤버 초기화 */
   t->nice = 0;
   t->recent_cpu = INT_TO_FP(0);
+
+  /* userprog */
+  list_init(&t->child_list);
+
+  sema_init(&t->wait_sema, 0);  // wait sema 초기화
+  sema_init(&t->exit_sema, 0);  // exit sema 초기화
+
+  t->exit_status = 0;   // exit status 초기화(해줘야 하나?)
+
+  t->parent = NULL;
+  t->already_waited = false;
+
+  t->fd_table = NULL;
+
+  t->excute_file = NULL;
+
+  sema_init(&t->fork_sema, 0);
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should
@@ -802,3 +827,18 @@ int max_priority_mlfqs_queue(void) {  // mlfqs에서 존재하는 ready_thread �
 }
 
 bool is_not_idle(struct thread *t) { return t != idle_thread; }
+
+struct thread *thread_get_by_tid (tid_t tid) {
+    enum intr_level old_level = intr_disable();
+
+    for (struct list_elem *e = list_begin(&all_list); 
+         e != list_end(&all_list); 
+         e = list_next (e)) 
+    {
+        struct thread *t = list_entry (e, struct thread, all_elem);
+        if (t->tid == tid) return t;
+    }
+
+    intr_set_level(old_level);
+    return NULL;
+}
