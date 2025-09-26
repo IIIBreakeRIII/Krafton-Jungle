@@ -1,0 +1,45 @@
+# Pintos 빌드 중간 파일 및 산출물
+*.o
+*.d
+*.out
+*.bin
+*.elf
+*.img
+*.map
+*.lst
+*.log
+*.qemu
+*.raw
+*.hex
+*.dis
+*.dump
+Makefile.kernel
+Makefile.userprog
+
+# 빌드 디렉터리
+**/build/
+**/bin/
+**/obj/
+**/output/
+# core dump
+core
+*.json
+
+select_test.sh
+.test_config
+.test_status
+
+# 임시 파일
+*~
+*.swp
+
+# macOS
+.DS_Store
+
+.test_status
+
+# CRLF
+activate
+.devcontainer/Dockerfile
+**/utils/*
+**/test/
