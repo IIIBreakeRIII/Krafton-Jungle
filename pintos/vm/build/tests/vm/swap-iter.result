@@ -1,19 +1,13 @@
 FAIL
-Kernel panic in run: PANIC at ../../threads/palloc.c:321 in palloc_free_multiple(): assertion `bitmap_all (pool->used_map, page_idx, page_cnt)' failed.
-Call stack: 0x800421873c 0x800420b5b6 0x800420b607 0x800422366d 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0xcccccccccccccccc
+Kernel panic in run: PANIC at ../../threads/mmu.c:235 in pml4_set_page(): assertion `pg_ofs (kpage) == 0' failed.
+Call stack: 0x800421873c 0x800420ce5b 0x80042228f5 0x80042227c9 0x800421db89 0x8004208ca5 0x80042090fd 0x400dd8 0x400e28
 Translation of call stack:
 0x000000800421873c: debug_panic (lib/kernel/debug.c:32)
-0x000000800420b5b6: palloc_free_multiple (threads/palloc.c:322)
-0x000000800420b607: palloc_free_page (threads/palloc.c:329)
-0x000000800422366d: anon_destroy (vm/anon.c:100)
-0x0000008004222eed: spt_destroy_page (vm/vm.c:357)
-0x000000800421aff2: hash_clear (lib/kernel/hash.c:58)
-0x000000800421b079: hash_destroy (lib/kernel/hash.c:84)
-0x0000008004222f33: supplemental_page_table_kill (vm/vm.c:364)
-0x000000800421cd91: process_cleanup (userprog/process.c:698)
-0x000000800421cd27: process_exit (userprog/process.c:662)
-0x00000080042072a2: thread_exit (threads/thread.c:307)
-0x000000800421dc8c: page_fault (userprog/exception.c:147)
+0x000000800420ce5b: pml4_set_page (threads/mmu.c:236)
+0x00000080042228f5: vm_do_claim_page (vm/vm.c:242)
+0x00000080042227c9: vm_try_handle_fault (vm/vm.c:217)
+0x000000800421db89: page_fault (userprog/exception.c:134)
 0x0000008004208ca5: intr_handler (threads/interrupt.c:352)
 0x00000080042090fd: intr_entry (intr-stubs.o:?)
-0xcccccccccccccccc: (unknown)
+0x0000000000400dd8: (unknown)
+0x0000000000400e28: (unknown)

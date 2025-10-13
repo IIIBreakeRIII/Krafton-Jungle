@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put syn-read put child-syn-re
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  155,443,200 loops/s.
+Calibrating timer...  209,510,400 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -29,19 +29,34 @@ Executing 'syn-read':
 (syn-read) write "data"
 (syn-read) close "data"
 (syn-read) exec child 1 of 10: "child-syn-read 0"
-load: child-syn-read: open failed
-child-syn-read: exit(-1)
 (syn-read) exec child 2 of 10: "child-syn-read 1"
-(syn-read) exec child 2 of 10: "child-syn-read 1": FAILED
-syn-read: exit(1)
-Execution of 'syn-read' complete.
-Timer: 112 ticks
-Thread: 17 idle ticks, 75 kernel ticks, 21 user ticks
+(syn-read) exec child 3 of 10: "child-syn-read 2"
+(syn-read) exec child 4 of 10: "child-syn-read 3"
+(syn-read) exec child 5 of 10: "child-syn-read 4"
+(syn-read) exec child 6 of 10: "child-syn-read 5"
+(syn-read) exec child 7 of 10: "child-syn-read 6"
+(syn-read) exec child 8 of 10: "child-syn-read 7"
+(syn-read) exec child 9 of 10: "child-syn-read 8"
+(syn-read) exec child 10 of 10: "child-syn-read 9"
+Page fault at 0x80053e0000: not present error writing page in kernel context.
+Interrupt 0x0e (#PF Page-Fault Exception) at rip=8004217f47
+ cr2=00000080053e0000 error=               2
+rax 00000080053e0000 rbx 0000000000406000 rcx 0000008004a2a000 rdx 0000000000000000
+rsp 0000008004251d70 rbp 0000008004251da0 rsi 0000000000000000 rdi 0000008004a2a000
+rip 0000008004217f47 r8 000000800422328a  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000000 r12 0000008004a2a000 r13 0000000000000001 r14 0000000000000000
+r15 0000000000000000 rflags 00000202
+es: 0010 ds: 0010 cs: 0008 ss: 0010
+Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x800421873c 0x800421da8b 0x800421dcab 0x8004208ca5 0x80042090fd 0x800421d40c 0x800422318b 0x8004222920 0x80042227c9 0x800421db89 0x8004208ca5 0x80042090fd 0x400f5c.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 147 ticks
+Thread: 11 idle ticks, 76 kernel ticks, 60 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 142 reads, 576 writes
+hd0:1: 163 reads, 576 writes
 hd1:0: 261 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1361 characters output
-Keyboard: 0 keys pressed
-Exception: 1 page faults
-Powering off...
+Console: 2617 characters output
+Key

@@ -5,13 +5,14 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0098B4A0+008CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put swap-iter put large.txt run swap-iter
+Booting from Hard Disk...
+Kernel command line: -q -f put swap-iter put large.txt run swap-iter
 0 ~ 9fc00 1
 100000 ~ 9e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x9e0000 (Usable: 9,088 kB)
-Calibrating timer...  139,878,400 loops/s.
+Calibrating timer...  52,377,600 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -27,22 +28,16 @@ Executing 'swap-iter':
 (swap-iter) write sparsely over page 0
 (swap-iter) write sparsely over page 512
 (swap-iter) write sparsely over page 1024
-swap-iter: exit(-1)
-Kernel PANIC at ../../threads/palloc.c:321 in palloc_free_multiple(): assertion `bitmap_all (pool->used_map, page_idx, page_cnt)' failed.
-Call stack: 0x800421873c 0x800420b5b6 0x800420b607 0x800422366d 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0xccccccccccccccccInterrupt 0x0d (#GP General Protection Exception) at rip=8004215598
- cr2=0000000000000000 error=               0
-rax cccccccccccccccc rbx 00000000000003fd rcx 00000080040b8000 rdx 00000000000003d4
-rsp 0000008004243cb0 rbp 0000008004243cc0 rsi 000000000000b40f rdi 0000000000000000
-rip 0000008004215598 r8 0000008004243bc8  r9 000000800421bf72 r10 0000000000000000
-r11 0000000000000206 r12 0000000000000000 r13 0000000000000000 r14 0000000000000000
-r15 0000000000000000 rflags 00000086
-es: 0010 ds: 0010 cs: 0008 ss: 0010
-Kernel PANIC recursion at ../../userprog/exception.c:97 in kill().
-Timer: 625 ticks
-Thread: 367 idle ticks, 184 kernel ticks, 74 user ticks
+Kernel PANIC at ../../threads/mmu.c:235 in pml4_set_page(): assertion `pg_ofs (kpage) == 0' failed.
+Call stack: 0x800421873c 0x800420ce5b 0x80042228f5 0x80042227c9 0x800421db89 0x8004208ca5 0x80042090fd 0x400dd8 0x400e28.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 712 ticks
+Thread: 417 idle ticks, 222 kernel ticks, 73 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 112 reads, 15936 writes
 hd1:0: 7949 reads, 0 writes
-hd1:1: 16 reads, 24 writes
-Console: 2078 characters output
+hd1:1: 8 reads, 8 writes
+Console: 1493 characters output
 Key

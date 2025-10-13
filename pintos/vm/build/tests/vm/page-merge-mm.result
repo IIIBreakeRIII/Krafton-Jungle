@@ -1,22 +1,2 @@
 FAIL
-Kernel panic in run: PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
-Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x80042232eb 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0x4004e5 0x400157 0x40108c
-Translation of call stack:
-0x000000800421873c: debug_panic (lib/kernel/debug.c:32)
-0x000000800422169b: inode_allow_write (filesys/inode.c:305)
-0x00000080042203e0: file_allow_write (filesys/file.c:137)
-0x000000800422015f: file_close (filesys/file.c:56)
-0x00000080042232eb: uninit_destroy (vm/uninit.c:65)
-0x0000008004222eed: spt_destroy_page (vm/vm.c:357)
-0x000000800421aff2: hash_clear (lib/kernel/hash.c:58)
-0x000000800421b079: hash_destroy (lib/kernel/hash.c:84)
-0x0000008004222f33: supplemental_page_table_kill (vm/vm.c:364)
-0x000000800421cd91: process_cleanup (userprog/process.c:698)
-0x000000800421cd27: process_exit (userprog/process.c:662)
-0x00000080042072a2: thread_exit (threads/thread.c:307)
-0x000000800421dc8c: page_fault (userprog/exception.c:147)
-0x0000008004208ca5: intr_handler (threads/interrupt.c:352)
-0x00000080042090fd: intr_entry (intr-stubs.o:?)
-0x00000000004004e5: (unknown)
-0x0000000000400157: (unknown)
-0x000000000040108c: (unknown)
+run: wait for child 0: FAILED

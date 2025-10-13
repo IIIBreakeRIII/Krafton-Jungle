@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put mmap-unmap put sample.txt
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,755,200 loops/s.
+Calibrating timer...  104,857,600 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -28,16 +28,15 @@ Executing 'mmap-unmap':
 (mmap-unmap) mmap "sample.txt"
 (mmap-unmap) memory is readable 540884285
 (mmap-unmap) memory is readable 540888381
-Kernel PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
-Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x8004223f88 0x800421e8fd 0x800421dd96 0x40013d 0x400c81 0x400cd1.
-The `backtrace' program can make call stacks useful.
-Read "Backtraces" in the "Debugging Tools" chapter
-of the Pintos documentation for more information.
-Timer: 96 ticks
-Thread: 8 idle ticks, 75 kernel ticks, 13 user ticks
+mmap-unmap: exit(-1)
+Execution of 'mmap-unmap' complete.
+Timer: 121 ticks
+Thread: 6 idle ticks, 99 kernel ticks, 17 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 119 reads, 288 writes
 hd1:0: 125 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1538 characters output
-Key
+Console: 1199 characters output
+Keyboard: 0 keys pressed
+Exception: 1 page faults
+Powering off...

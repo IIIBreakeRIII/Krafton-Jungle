@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put exec-boundary put child-s
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,755,200 loops/s.
+Calibrating timer...  132,710,400 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -29,17 +29,17 @@ Interrupt 0x0e (#PF Page-Fault Exception) at rip=8004217f47
  cr2=00000080053e0000 error=               2
 rax 00000080053e0000 rbx 0000000000402000 rcx 0000008004a2f000 rdx 0000000000000000
 rsp 0000008004251d70 rbp 0000008004251da0 rsi 0000000000000000 rdi 0000008004a2f000
-rip 0000008004217f47 r8 0000008004223398  r9 0000000000000000 r10 0000000000000000
+rip 0000008004217f47 r8 000000800422328a  r9 0000000000000000 r10 0000000000000000
 r11 0000000000000000 r12 0000008004a2e000 r13 0000000000000000 r14 0000000000000000
 r15 0000000000000000 rflags 00000206
 es: 0010 ds: 0010 cs: 0008 ss: 0010
 Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
-Call stack: 0x800421873c 0x800421daff 0x800421dd1f 0x8004208ca5 0x80042090fd 0x800421d448 0x800422322d 0x8004222978 0x8004222821 0x800421dbfd 0x8004208ca5 0x80042090fd 0x400eb3 0x400f74 0x40009e 0x40021a 0x40003d 0x400b2a.
+Call stack: 0x800421873c 0x800421da8b 0x800421dcab 0x8004208ca5 0x80042090fd 0x800421d40c 0x800422318b 0x8004222920 0x80042227c9 0x800421db89 0x8004208ca5 0x80042090fd 0x400eb3 0x400f74 0x40009e 0x40021a 0x40003d 0x400b2a.
 The `backtrace' program can make call stacks useful.
 Read "Backtraces" in the "Debugging Tools" chapter
 of the Pintos documentation for more information.
-Timer: 141 ticks
-Thread: 15 idle ticks, 81 kernel ticks, 45 user ticks
+Timer: 193 ticks
+Thread: 24 idle ticks, 98 kernel ticks, 71 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 153 reads, 518 writes
 hd1:0: 240 reads, 0 writes
