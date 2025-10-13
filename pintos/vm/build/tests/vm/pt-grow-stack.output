@@ -14,7 +14,7 @@ Pintos booting with:
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
 Calibrating timer...  209,510,400 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 337 sector (168 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 130 sector (65 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -24,15 +24,17 @@ Boot complete.
 Putting 'pt-grow-stack' into the file system...
 Executing 'pt-grow-stack':
 (pt-grow-stack) begin
-pt-grow-stack: exit(-1)
+(pt-grow-stack) cksum: 3424492700
+(pt-grow-stack) end
+pt-grow-stack: exit(0)
 Execution of 'pt-grow-stack' complete.
-Timer: 78 ticks
-Thread: 5 idle ticks, 70 kernel ticks, 4 user ticks
+Timer: 93 ticks
+Thread: 5 idle ticks, 79 kernel ticks, 9 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 89 reads, 288 writes
 hd1:0: 130 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1011 characters output
+Console: 1064 characters output
 Keyboard: 0 keys pressed
-Exception: 1 page faults
+Exception: 0 page faults
 Powering off...

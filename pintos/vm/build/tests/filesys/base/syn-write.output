@@ -11,9 +11,9 @@ Booting from Hard Disk..Kernel command line: -q -f put syn-write put child-syn-w
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 337 sector (168 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 261 sector (130 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -35,38 +35,25 @@ Executing 'syn-write':
 (syn-write) exec child 8 of 10: "child-syn-wrt 7"
 (syn-write) exec child 9 of 10: "child-syn-wrt 8"
 (syn-write) exec child 10 of 10: "child-syn-wrt 9"
-child-syn-wrt: exit(0)
-(syn-write) wait for child 1 of 10 returned 0 (expected 0)
-child-syn-wrt: exit(5)
-child-syn-wrt: exit(1)
-(syn-write) wait for child 2 of 10 returned 1 (expected 1)
-child-syn-wrt: exit(9)
-child-syn-wrt: exit(3)
-child-syn-wrt: exit(6)
-child-syn-wrt: exit(8)
-child-syn-wrt: exit(4)
-child-syn-wrt: exit(7)
-child-syn-wrt: exit(2)
-(syn-write) wait for child 3 of 10 returned 2 (expected 2)
-(syn-write) wait for child 4 of 10 returned 3 (expected 3)
-(syn-write) wait for child 5 of 10 returned 4 (expected 4)
-(syn-write) wait for child 6 of 10 returned 5 (expected 5)
-(syn-write) wait for child 7 of 10 returned 6 (expected 6)
-(syn-write) wait for child 8 of 10 returned 7 (expected 7)
-(syn-write) wait for child 9 of 10 returned 8 (expected 8)
-(syn-write) wait for child 10 of 10 returned 9 (expected 9)
-(syn-write) open "stuff"
-(syn-write) read "stuff"
-(syn-write) end
-syn-write: exit(0)
-Execution of 'syn-write' complete.
-Timer: 135 ticks
-Thread: 11 idle ticks, 76 kernel ticks, 48 user ticks
+Page fault at 0x80053e0000: not present error writing page in kernel context.
+Interrupt 0x0e (#PF Page-Fault Exception) at rip=8004217f47
+ cr2=00000080053e0000 error=               2
+rax 00000080053e0000 rbx 0000000000406000 rcx 0000008004a2e000 rdx 0000000000000000
+rsp 0000008004251d70 rbp 0000008004251da0 rsi 0000000000000000 rdi 0000008004a2e000
+rip 0000008004217f47 r8 0000008004223274  r9 0000000000000000 r10 0000000000000000
+r11 0000000000000000 r12 0000008004a2e000 r13 0000000000000001 r14 0000000000000000
+r15 0000000000000000 rflags 00000202
+es: 0010 ds: 0010 cs: 0008 ss: 0010
+Kernel PANIC at ../../userprog/exception.c:97 in kill(): Kernel bug - unexpected interrupt in kernel
+Call stack: 0x800421873c 0x800421daff 0x800421dd1f 0x8004208ca5 0x80042090fd 0x800421d448 0x8004223109 0x8004222875 0x800422271e 0x800421dbfd 0x8004208ca5 0x80042090fd 0x4000b8 0x400f42.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 126 ticks
+Thread: 11 idle ticks, 73 kernel ticks, 42 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 691 reads, 592 writes
+hd0:1: 173 reads, 582 writes
 hd1:0: 261 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 2468 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
+Console: 2560 characters output
+Key

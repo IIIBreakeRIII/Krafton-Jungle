@@ -13,7 +13,7 @@ Pintos booting with:
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
 Calibrating timer...  209,510,400 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 337 sector (168 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 253 sector (126 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -33,8 +33,9 @@ child-sort: exit(-1)
 load: child-sort: open failed
 child-sort: exit(-1)
 (page-merge-par) sort chunk 3
+load: child-sort: open failed
+child-sort: exit(-1)
 (page-merge-par) sort chunk 4
-child-sort: exit(123)
 (page-merge-par) sort chunk 5
 child-sort: exit(123)
 (page-merge-par) sort chunk 6
@@ -45,13 +46,13 @@ child-sort: exit(123)
 (page-merge-par) wait for child 0: FAILED
 page-merge-par: exit(1)
 Execution of 'page-merge-par' complete.
-Timer: 272 ticks
-Thread: 82 idle ticks, 73 kernel ticks, 117 user ticks
+Timer: 338 ticks
+Thread: 105 idle ticks, 86 kernel ticks, 148 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 1583 reads, 5760 writes
+hd0:1: 1296 reads, 5504 writes
 hd1:0: 253 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1614 characters output
+Console: 1644 characters output
 Keyboard: 0 keys pressed
-Exception: 2 page faults
+Exception: 3 page faults
 Powering off...

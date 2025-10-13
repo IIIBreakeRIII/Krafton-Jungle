@@ -6,16 +6,22 @@
 #include "threads/mmu.h"
 #include "threads/vaddr.h"
 
+
+static struct list frame_table;  // 전역 프레임 리스트
+static struct lock frame_table_lock;
+
 void
 vm_init (void) {
-	vm_anon_init ();
-	vm_file_init ();
-#ifdef EFILESYS
-	pagecache_init ();
-#endif
-	register_inspect_intr ();
-}
+    vm_anon_init();
+    vm_file_init();
+    list_init(&frame_table);
+    lock_init(&frame_table_lock);
+    register_inspect_intr();     
 
+#ifdef EFILESYS
+    pagecache_init();
+#endif
+}
 enum vm_type
 page_get_type (struct page *page) {
 	int ty = VM_TYPE (page->operations->type);
@@ -78,36 +84,80 @@ spt_remove_page (struct supplemental_page_table *spt, struct page *page) {
 }
 
 static struct frame *
-vm_get_victim (void) {
-	struct frame *victim = NULL;
-	return victim;
+vm_get_victim(void) {
+    // Clock 알고리즘 구현 (Second Chance)
+    lock_acquire(&frame_table_lock);
+    
+    struct list_elem *e = list_begin(&frame_table);
+    while (true) {
+        if (e == list_end(&frame_table))
+            e = list_begin(&frame_table);
+        
+        struct frame *victim = list_entry(e, struct frame, elem);
+        struct page *page = victim->page;
+        
+        if (page == NULL) {
+            e = list_next(e);
+            continue;
+        }
+        
+        // Accessed bit 확인
+        if (pml4_is_accessed(thread_current()->pml4, page->va)) {
+            pml4_set_accessed(thread_current()->pml4, page->va, false);
+            e = list_next(e);
+        } else {
+            lock_release(&frame_table_lock);
+            return victim;
+        }
+    }
 }
 
 static struct frame *
-vm_evict_frame (void) {
-	struct frame *victim UNUSED = vm_get_victim ();
-	return NULL;
+vm_evict_frame(void) {
+    struct frame *victim = vm_get_victim();
+    struct page *page = victim->page;
+    
+    // 페이지를 스왑아웃
+    if (!swap_out(page))
+        PANIC("Swap out failed");
+    
+    victim->page = NULL;
+    return victim;
 }
 
 static struct frame *
-vm_get_frame (void) {
-	void *kva = palloc_get_page(PAL_USER);
-	if (kva == NULL) {
-		PANIC("todo");
-	}
-	
-	struct frame *frame = malloc(sizeof(struct frame));
-	
-	frame->kva = kva;
-	frame->page = NULL;
-	
-	ASSERT(frame != NULL);
-	ASSERT(frame->page == NULL);
-	return frame;
+vm_get_frame(void) {
+    void *kva = palloc_get_page(PAL_USER);
+    if (kva == NULL) {
+        // 메모리 부족 - eviction 필요
+        return vm_evict_frame();
+    }
+    
+    struct frame *frame = malloc(sizeof(struct frame));
+    frame->kva = kva;
+    frame->page = NULL;
+    
+    lock_acquire(&frame_table_lock);
+    list_push_back(&frame_table, &frame->elem);
+    lock_release(&frame_table_lock);
+    
+    return frame;
 }
 
+// vm.c
 static void
-vm_stack_growth (void *addr UNUSED) {
+vm_stack_growth(void *addr) {
+    // 스택 포인터보다 아래에 있는 주소로 접근하면 스택을 확장
+    void *stack_page = pg_round_down(addr);
+    
+    // 스택 크기 제한 체크 (보통 1MB 정도)
+    if ((USER_STACK - (uint64_t)stack_page) > (1 << 20))
+        return;
+    
+    // 새 페이지 할당하고 claim
+    if (vm_alloc_page(VM_ANON, stack_page, true)) {
+        vm_claim_page(stack_page);
+    }
 }
 
 static bool
@@ -115,20 +165,43 @@ vm_handle_wp (struct page *page UNUSED) {
 	return false;
 }
 
+// vm.c
+// vm.c
 bool
-vm_try_handle_fault (struct intr_frame *f, void *addr,
+vm_try_handle_fault(struct intr_frame *f, void *addr,
                      bool user, bool write, bool not_present) {
     struct supplemental_page_table *spt = &thread_current()->spt;
     struct page *page = NULL;
     
+    // 주소를 페이지 경계로 내림
     void *page_addr = pg_round_down(addr);
     
+    // SPT에서 페이지를 찾아봄
     page = spt_find_page(spt, page_addr);
     
     if (page == NULL) {
+        // 페이지가 SPT에 없는 경우 - 스택 증가가 필요한지 확인
+        
+        // user가 true면 사용자 모드에서 발생한 폴트이므로 f->rsp 사용
+        // user가 false면 커널 모드에서 발생한 폴트이므로 저장된 saved_rsp 사용
+        void *rsp = user ? f->rsp : thread_current()->saved_rsp;
+        
+        // 스택 증가 판단 조건:
+        // 1. 접근 주소가 rsp보다 크거나 같아야 함 (스택은 아래로 자람)
+        // 2. 단, PUSH 명령어는 rsp를 감소시키기 전에 메모리 접근을 하므로
+        //    rsp - 8 까지는 허용해줘야 함
+        // 3. USER_STACK보다는 작아야 함 (스택 영역 내)
+        if (addr >= rsp - 8 && addr < USER_STACK) {
+            // 유효한 스택 접근으로 판단 - 스택 증가 시도
+            vm_stack_growth(addr);
+            return true;
+        }
+        
+        // 스택 접근이 아니면 유효하지 않은 메모리 접근
         return false;
     }
     
+    // 페이지가 SPT에 있으면 claim 시도
     return vm_do_claim_page(page);
 }
 
