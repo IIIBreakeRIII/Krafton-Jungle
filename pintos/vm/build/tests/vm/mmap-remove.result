@@ -1,22 +1,14 @@
 FAIL
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (mmap-remove) begin
-  (mmap-remove) open "sample.txt"
-  (mmap-remove) mmap "sample.txt"
-  (mmap-remove) remove "sample.txt"
-  (mmap-remove) try to open "sample.txt"
-  (mmap-remove) create "another"
-  (mmap-remove) end
-Differences in `diff -u' format:
-  (mmap-remove) begin
-  (mmap-remove) open "sample.txt"
-  (mmap-remove) mmap "sample.txt"
-- (mmap-remove) remove "sample.txt"
-- (mmap-remove) try to open "sample.txt"
-- (mmap-remove) create "another"
-- (mmap-remove) end
-+ Unknown system call: 14
-
-(Process exit codes are excluded for matching purposes.)
+Kernel panic in run: PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
+Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x8004223f88 0x800421e8fd 0x800421dd96 0x4002f0 0x400e10 0x400e60
+Translation of call stack:
+0x000000800421873c: debug_panic (lib/kernel/debug.c:32)
+0x000000800422169b: inode_allow_write (filesys/inode.c:305)
+0x00000080042203e0: file_allow_write (filesys/file.c:137)
+0x000000800422015f: file_close (filesys/file.c:56)
+0x0000008004223f88: do_munmap (vm/file.c:282)
+0x000000800421e8fd: syscall_handler (userprog/syscall.c:783)
+0x000000800421dd96: no_sti (syscall-entry.o:?)
+0x00000000004002f0: (unknown)
+0x0000000000400e10: (unknown)
+0x0000000000400e60: (unknown)

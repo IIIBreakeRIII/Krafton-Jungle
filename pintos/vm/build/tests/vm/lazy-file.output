@@ -5,13 +5,14 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put lazy-file put sample.txt put small.txt run lazy-file
+Booting from Hard Disk...
+Kernel command line: -q -f put lazy-file put sample.txt put small.txt run lazy-file
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  62,156,800 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -29,16 +30,27 @@ Executing 'lazy-file':
 (lazy-file) sizeof small: 10017
 (lazy-file) page aligned size of small: 12288
 (lazy-file) mmap "small.txt"
-Unknown system call: 14
+(lazy-file) initial pages status
+(lazy-file) check if page is not loaded
+(lazy-file) check if page is not loaded
+(lazy-file) check if page is not loaded
+(lazy-file) load pages (3)
+(lazy-file) load page [0]
+(lazy-file) check if page is loaded
+(lazy-file) check if page is not loaded
+(lazy-file) check if page is not loaded
+(lazy-file) load page [1]
 lazy-file: exit(-1)
-Execution of 'lazy-file' complete.
-Timer: 89 ticks
-Thread: 9 idle ticks, 71 kernel ticks, 9 user ticks
+Kernel PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
+Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x80042232eb 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0x40030d 0x400f5c 0x400fac.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 137 ticks
+Thread: 15 idle ticks, 83 kernel ticks, 39 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 153 reads, 384 writes
+hd0:1: 169 reads, 384 writes
 hd1:0: 168 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1262 characters output
-Keyboard: 0 keys pressed
-Exception: 0 page faults
-Powering off...
+Console: 2054 characters output
+Key

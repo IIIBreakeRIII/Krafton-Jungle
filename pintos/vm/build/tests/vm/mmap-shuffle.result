@@ -1,40 +1,21 @@
 FAIL
-Test output failed to match any acceptable form.
-
-Acceptable output:
-  (mmap-shuffle) begin
-  (mmap-shuffle) create "buffer"
-  (mmap-shuffle) open "buffer"
-  (mmap-shuffle) mmap "buffer"
-  (mmap-shuffle) init: cksum=3115322833
-  (mmap-shuffle) shuffle 0: cksum=2274652418
-  (mmap-shuffle) shuffle 1: cksum=2281360714
-  (mmap-shuffle) shuffle 2: cksum=3504443700
-  (mmap-shuffle) shuffle 3: cksum=2850516818
-  (mmap-shuffle) shuffle 4: cksum=2406916757
-  (mmap-shuffle) shuffle 5: cksum=3377643430
-  (mmap-shuffle) shuffle 6: cksum=658047850
-  (mmap-shuffle) shuffle 7: cksum=493716582
-  (mmap-shuffle) shuffle 8: cksum=3359519593
-  (mmap-shuffle) shuffle 9: cksum=143675990
-  (mmap-shuffle) end
-Differences in `diff -u' format:
-  (mmap-shuffle) begin
-  (mmap-shuffle) create "buffer"
-  (mmap-shuffle) open "buffer"
-  (mmap-shuffle) mmap "buffer"
-- (mmap-shuffle) init: cksum=3115322833
-- (mmap-shuffle) shuffle 0: cksum=2274652418
-- (mmap-shuffle) shuffle 1: cksum=2281360714
-- (mmap-shuffle) shuffle 2: cksum=3504443700
-- (mmap-shuffle) shuffle 3: cksum=2850516818
-- (mmap-shuffle) shuffle 4: cksum=2406916757
-- (mmap-shuffle) shuffle 5: cksum=3377643430
-- (mmap-shuffle) shuffle 6: cksum=658047850
-- (mmap-shuffle) shuffle 7: cksum=493716582
-- (mmap-shuffle) shuffle 8: cksum=3359519593
-- (mmap-shuffle) shuffle 9: cksum=143675990
-- (mmap-shuffle) end
-+ Unknown system call: 14
-
-(Process exit codes are excluded for matching purposes.)
+Kernel panic in run: PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
+Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x80042232eb 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0x401063 0x4010b3
+Translation of call stack:
+0x000000800421873c: debug_panic (lib/kernel/debug.c:32)
+0x000000800422169b: inode_allow_write (filesys/inode.c:305)
+0x00000080042203e0: file_allow_write (filesys/file.c:137)
+0x000000800422015f: file_close (filesys/file.c:56)
+0x00000080042232eb: uninit_destroy (vm/uninit.c:65)
+0x0000008004222eed: spt_destroy_page (vm/vm.c:357)
+0x000000800421aff2: hash_clear (lib/kernel/hash.c:58)
+0x000000800421b079: hash_destroy (lib/kernel/hash.c:84)
+0x0000008004222f33: supplemental_page_table_kill (vm/vm.c:364)
+0x000000800421cd91: process_cleanup (userprog/process.c:698)
+0x000000800421cd27: process_exit (userprog/process.c:662)
+0x00000080042072a2: thread_exit (threads/thread.c:307)
+0x000000800421dc8c: page_fault (userprog/exception.c:147)
+0x0000008004208ca5: intr_handler (threads/interrupt.c:352)
+0x00000080042090fd: intr_entry (intr-stubs.o:?)
+0x0000000000401063: (unknown)
+0x00000000004010b3: (unknown)

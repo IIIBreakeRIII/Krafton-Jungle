@@ -57,7 +57,7 @@ struct page {
 
 	struct hash_elem hash_elem;  // 해시 테이블에 넣기 위한 element
 	bool writable;  // 이거 추가해야 vm_alloc_page_with_initializer 함수에서 파라미터를 받을 수 있음
-
+    struct thread *owner;  /* 이 페이지를 소유한 프로세스 */
 	/* Per-type data are binded into the union.
 	 * Each function automatically detects the current union */
 	union {
@@ -72,8 +72,9 @@ struct page {
 
 /* The representation of "frame" */
 struct frame {
-	void *kva;
-	struct page *page;
+    void *kva;
+    struct page *page;
+    struct list_elem elem;  /* Frame table에서 사용 */
 };
 
 /* The function table for page operations.

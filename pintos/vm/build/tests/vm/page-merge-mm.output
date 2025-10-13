@@ -5,13 +5,14 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put page-merge-mm put child-qsort-mm run page-merge-mm
+Booting from Hard Disk...
+Kernel command line: -q -f put page-merge-mm put child-qsort-mm run page-merge-mm
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  11,456,000 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -36,24 +37,18 @@ child-qsort-mm: exit(-1)
 load: child-qsort-mm: open failed
 child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 4
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 5
-(page-merge-mm) sort chunk 6
-Unknown system call: 14
 child-qsort-mm: exit(-1)
-(page-merge-mm) sort chunk 7
-(page-merge-mm) wait for child 0
-(page-merge-mm) wait for child 0: FAILED
-page-merge-mm: exit(1)
-Execution of 'page-merge-mm' complete.
-Timer: 246 ticks
-Thread: 55 idle ticks, 73 kernel ticks, 118 user ticks
+Kernel PANIC at ../../filesys/inode.c:304 in inode_allow_write(): assertion `inode->deny_write_cnt > 0' failed.
+Call stack: 0x800421873c 0x800422169b 0x80042203e0 0x800422015f 0x80042232eb 0x8004222eed 0x800421aff2 0x800421b079 0x8004222f33 0x800421cd91 0x800421cd27 0x80042072a2 0x800421dc8c 0x8004208ca5 0x80042090fd 0x4004e5 0x400157 0x40108c.
+The `backtrace' program can make call stacks useful.
+Read "Backtraces" in the "Debugging Tools" chapter
+of the Pintos documentation for more information.
+Timer: 275 ticks
+Thread: 52 idle ticks, 83 kernel ticks, 140 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 515 reads, 4748 writes
+hd0:1: 334 reads, 3176 writes
 hd1:0: 259 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1698 characters output
-Keyboard: 0 keys pressed
-Exception: 4 page faults
-Powering off...
+Console: 1921 characters output
+Key

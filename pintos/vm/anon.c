@@ -31,7 +31,7 @@ bool
 anon_initializer(struct page *page, enum vm_type type, void *kva) {
     page->operations = &anon_ops;
     struct anon_page *anon_page = &page->anon;
-    anon_page->swap_index = -1;  // 초기에는 스왑되지 않음
+    anon_page->swap_slot = -1;  // 초기에는 스왑되지 않음
     return true;
 }
 
@@ -40,7 +40,7 @@ anon_swap_in(struct page *page, void *kva) {
     struct anon_page *anon_page = &page->anon;
     
     // 스왑 인덱스가 유효하지 않으면 그냥 0으로 채움 (새 페이지)
-    if (anon_page->swap_index == -1) {
+    if (anon_page->swap_slot == -1) {
         memset(kva, 0, PGSIZE);
         return true;
     }
@@ -48,13 +48,13 @@ anon_swap_in(struct page *page, void *kva) {
     // 디스크에서 읽어오기
     for (int i = 0; i < SECTORS_PER_PAGE; i++) {
         disk_read(swap_disk,
-                  anon_page->swap_index * SECTORS_PER_PAGE + i,
+                  anon_page->swap_slot * SECTORS_PER_PAGE + i,
                   kva + i * DISK_SECTOR_SIZE);
     }
     
     // 스왑 슬롯 해제
-    bitmap_set(swap_table, anon_page->swap_index, false);
-    anon_page->swap_index = -1;
+    bitmap_set(swap_table, anon_page->swap_slot, false);
+    anon_page->swap_slot = -1;
     
     return true;
 }
@@ -74,7 +74,7 @@ anon_swap_out(struct page *page) {
                    page->frame->kva + i * DISK_SECTOR_SIZE);
     }
     
-    anon_page->swap_index = slot;
+    anon_page->swap_slot = slot;
     
     // 페이지 테이블에서 제거
     pml4_clear_page(thread_current()->pml4, page->va);

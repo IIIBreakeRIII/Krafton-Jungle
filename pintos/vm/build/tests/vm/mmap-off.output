@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put mmap-off put large.txt ru
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  104,755,200 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -26,16 +26,26 @@ Executing 'mmap-off':
 (mmap-off) begin
 (mmap-off) open "large.txt"
 (mmap-off) try to mmap with offset 0x1000
-Unknown system call: 14
-mmap-off: exit(-1)
+(mmap-off) validate mmap.
+(mmap-off) validated.
+(mmap-off) write to mmap
+(mmap-off) validate contents.
+(mmap-off) open "large.txt"
+(mmap-off) read "large.txt" Page 0
+(mmap-off) validate page 0.
+(mmap-off) validated.
+(mmap-off) read "large.txt" Page 1
+(mmap-off) validate page 1.
+(mmap-off) validate fail.: FAILED
+mmap-off: exit(1)
 Execution of 'mmap-off' complete.
-Timer: 371 ticks
-Thread: 248 idle ticks, 115 kernel ticks, 8 user ticks
+Timer: 551 ticks
+Thread: 354 idle ticks, 172 kernel ticks, 25 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 115 reads, 15938 writes
+hd0:1: 169 reads, 15938 writes
 hd1:0: 7950 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1137 characters output
+Console: 1426 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
