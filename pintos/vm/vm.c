@@ -253,23 +253,42 @@ vm_get_frame(void)
 }
 
 // vm.c
-static void
-vm_stack_growth(void *addr)
-{
-    // 스택 포인터보다 아래에 있는 주소로 접근하면 스택을 확장
-    void *stack_page = pg_round_down(addr);
+// static void
+// vm_stack_growth(void *addr)
+// {
+//     // 스택 포인터보다 아래에 있는 주소로 접근하면 스택을 확장
+//     void *stack_page = pg_round_down(addr);
 
-    // 스택 크기 제한 체크 (보통 1MB 정도)
+//     // 스택 크기 제한 체크 (보통 1MB 정도)
+//     if ((USER_STACK - (uint64_t)stack_page) > (1 << 20))
+//         return;
+
+//     // 추가: 주소가 너무 낮으면 실패
+//     if (stack_page < (void *)0x400000) // 임의의 최소 주소
+//         return;
+
+//     // 새 페이지 할당하고 claim
+//     if (vm_alloc_page(VM_ANON, stack_page, true))
+//     {
+//         vm_claim_page(stack_page);
+//     }
+// }
+static void
+vm_stack_growth(void *addr) {
+    void *stack_page = pg_round_down(addr);
+    
+    // 스택 크기 제한 체크 (1MB)
     if ((USER_STACK - (uint64_t)stack_page) > (1 << 20))
         return;
-
-    // 추가: 주소가 너무 낮으면 실패
-    if (stack_page < (void *)0x400000) // 임의의 최소 주소
+    
+    // 추가 체크: 너무 낮은 주소는 거부
+    // 스택은 USER_STACK에서 아래로 자라지만, 
+    // 너무 낮은 주소(예: 힙 영역)까지는 가면 안됨
+    if (stack_page < (void *)(USER_STACK - (1 << 20)))
         return;
-
+    
     // 새 페이지 할당하고 claim
-    if (vm_alloc_page(VM_ANON, stack_page, true))
-    {
+    if (vm_alloc_page(VM_ANON, stack_page, true)) {
         vm_claim_page(stack_page);
     }
 }

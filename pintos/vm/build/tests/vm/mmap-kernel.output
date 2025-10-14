@@ -31,8 +31,8 @@ Executing 'mmap-kernel':
 (mmap-kernel) end
 mmap-kernel: exit(0)
 Execution of 'mmap-kernel' complete.
-Timer: 91 ticks
-Thread: 9 idle ticks, 70 kernel ticks, 12 user ticks
+Timer: 88 ticks
+Thread: 6 idle ticks, 71 kernel ticks, 11 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 115 reads, 286 writes
 hd1:0: 124 reads, 0 writes

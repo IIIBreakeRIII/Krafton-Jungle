@@ -5,8 +5,7 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk...
-Kernel command line: -q -f put page-merge-seq put child-sort run page-merge-seq
+Booting from Hard Disk..Kernel command line: -q -f put page-merge-seq put child-sort run page-merge-seq
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
@@ -96,8 +95,8 @@ child-sort: exit(123)
 (page-merge-seq) end
 page-merge-seq: exit(0)
 Execution of 'page-merge-seq' complete.
-Timer: 465 ticks
-Thread: 113 idle ticks, 75 kernel ticks, 277 user ticks
+Timer: 530 ticks
+Thread: 150 idle ticks, 78 kernel ticks, 303 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 4842 reads, 4710 writes
 hd1:0: 251 reads, 0 writes

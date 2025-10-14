@@ -27,13 +27,13 @@ Executing 'write-bad-ptr':
 (write-bad-ptr) open "sample.txt"
 write-bad-ptr: exit(-1)
 Execution of 'write-bad-ptr' complete.
-Timer: 84 ticks
-Thread: 11 idle ticks, 68 kernel ticks, 5 user ticks
+Timer: 86 ticks
+Thread: 6 idle ticks, 73 kernel ticks, 7 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 116 reads, 280 writes
 hd1:0: 121 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1107 characters output
+Console: 1106 characters output
 Keyboard: 0 keys pressed
 Exception: 1 page faults
 Powering off...

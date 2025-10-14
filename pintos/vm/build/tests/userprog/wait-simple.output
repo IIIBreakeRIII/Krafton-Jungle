@@ -30,8 +30,8 @@ child-simple: exit(81)
 (wait-simple) end
 wait-simple: exit(0)
 Execution of 'wait-simple' complete.
-Timer: 98 ticks
-Thread: 15 idle ticks, 69 kernel ticks, 14 user ticks
+Timer: 91 ticks
+Thread: 10 idle ticks, 71 kernel ticks, 10 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 161 reads, 510 writes
 hd1:0: 236 reads, 0 writes

@@ -5,13 +5,14 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put rox-multichild put child-rox run rox-multichild
+Booting from Hard Disk...
+Kernel command line: -q -f put rox-multichild put child-rox run rox-multichild
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  157,081,600 loops/s.
+Calibrating timer...  130,662,400 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -61,8 +62,8 @@ child-rox: exit(12)
 (rox-multichild) end
 rox-multichild: exit(0)
 Execution of 'rox-multichild' complete.
-Timer: 144 ticks
-Thread: 12 idle ticks, 79 kernel ticks, 54 user ticks
+Timer: 165 ticks
+Thread: 26 idle ticks, 88 kernel ticks, 52 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 423 reads, 548 writes
 hd1:0: 254 reads, 0 writes

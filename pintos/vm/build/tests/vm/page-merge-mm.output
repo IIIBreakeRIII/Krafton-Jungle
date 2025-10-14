@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put page-merge-mm put child-q
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  206,233,600 loops/s.
+Calibrating timer...  130,867,200 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -33,27 +33,24 @@ child-qsort-mm: exit(-1)
 load: child-qsort-mm: open failed
 child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 3
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 4
+child-qsort-mm: exit(80)
 (page-merge-mm) sort chunk 5
-child-qsort-mm: exit(80)
 (page-merge-mm) sort chunk 6
-(page-merge-mm) sort chunk 7
 child-qsort-mm: exit(80)
+child-qsort-mm: exit(80)
+(page-merge-mm) sort chunk 7
 (page-merge-mm) wait for child 0
 (page-merge-mm) wait for child 0: FAILED
 page-merge-mm: exit(1)
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 Execution of 'page-merge-mm' complete.
-Timer: 278 ticks
-Thread: 69 idle ticks, 76 kernel ticks, 134 user ticks
+Timer: 350 ticks
+Thread: 90 idle ticks, 76 kernel ticks, 184 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 1071 reads, 5008 writes
+hd0:1: 1339 reads, 5008 writes
 hd1:0: 259 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1700 characters output
+Console: 1607 characters output
 Keyboard: 0 keys pressed
-Exception: 4 page faults
+Exception: 2 page faults
 Powering off...
