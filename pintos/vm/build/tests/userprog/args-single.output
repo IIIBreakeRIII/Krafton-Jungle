@@ -14,7 +14,7 @@ Pintos booting with:
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
 Calibrating timer...  209,510,400 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 118 sector (59 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -31,8 +31,8 @@ Executing 'args-single onearg':
 (args) end
 args-single: exit(0)
 Execution of 'args-single onearg' complete.
-Timer: 108 ticks
-Thread: 6 idle ticks, 85 kernel ticks, 18 user ticks
+Timer: 96 ticks
+Thread: 11 idle ticks, 75 kernel ticks, 10 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 84 reads, 264 writes
 hd1:0: 118 reads, 0 writes

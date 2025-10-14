@@ -5,8 +5,7 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk...
-Kernel command line: -q -f put wait-bad-pid run wait-bad-pid
+Booting from Hard Disk..Kernel command line: -q -f put wait-bad-pid run wait-bad-pid
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
@@ -14,7 +13,7 @@ Pintos booting with:
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
 Calibrating timer...  209,510,400 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 119 sector (59 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -27,8 +26,8 @@ Executing 'wait-bad-pid':
 (wait-bad-pid) end
 wait-bad-pid: exit(0)
 Execution of 'wait-bad-pid' complete.
-Timer: 83 ticks
-Thread: 7 idle ticks, 71 kernel ticks, 5 user ticks
+Timer: 84 ticks
+Thread: 3 idle ticks, 74 kernel ticks, 7 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 83 reads, 266 writes
 hd1:0: 119 reads, 0 writes

@@ -1454,3 +1454,24 @@ static void check_writable_buffer(void *buffer, unsigned size)
         check_addr += PGSIZE;
     }
 }
+// /* 쓰기용 버퍼 체크 - 주소 유효성만 확인, 페이지는 page fault로 처리 */
+// static void check_writable_buffer(void *buffer, unsigned size)
+// {
+//     if (buffer == NULL || !is_user_vaddr(buffer))
+//     {
+//         printf("%s: exit(-1)\n", thread_current()->name);
+//         thread_current()->exit_status = -1;
+//         thread_exit();
+//     }
+
+//     char *end = (char *)buffer + size - 1;
+//     if (!is_user_vaddr(end))
+//     {
+//         printf("%s: exit(-1)\n", thread_current()->name);
+//         thread_current()->exit_status = -1;
+//         thread_exit();
+//     }
+    
+//     // 주소 범위만 체크하고 페이지 존재 여부는 체크하지 않음
+//     // lazy allocation을 위해 page fault가 발생하도록 둠
+// }

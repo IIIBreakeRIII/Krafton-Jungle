@@ -89,95 +89,111 @@ void spt_remove_page(struct supplemental_page_table *spt, struct page *page)
     vm_dealloc_page(page);
 }
 
-// static struct frame *
-// vm_get_victim(void)
-// {
-//     // Clock 알고리즘 구현 (Second Chance)
-//     lock_acquire(&frame_table_lock);
-
-//     struct list_elem *e = list_begin(&frame_table);
-//     while (true)
-//     {
-//         if (e == list_end(&frame_table))
-//             e = list_begin(&frame_table);
-
-//         struct frame *victim = list_entry(e, struct frame, elem);
-//         struct page *page = victim->page;
-
-//         if (page == NULL)
-//         {
-//             e = list_next(e);
-//             continue;
-//         }
-
-//         // Accessed bit 확인
-//         if (pml4_is_accessed(thread_current()->pml4, page->va))
-//         {
-//             pml4_set_accessed(thread_current()->pml4, page->va, false);
-//             e = list_next(e);
-//         }
-//         else
-//         {
-//             lock_release(&frame_table_lock);
-//             return victim;
-//         }
-//     }
-// }
+/* vm.c */
 
 static struct frame *
-vm_get_victim(void)
-{
+vm_get_victim(void) {
     lock_acquire(&frame_table_lock);
-
-    if (list_empty(&frame_table))
-    {
+    
+    if (list_empty(&frame_table)) {
         lock_release(&frame_table_lock);
-        return NULL;
+        PANIC("No frames in frame table");
     }
-
-    struct list_elem *e = list_begin(&frame_table);
-
-    // Clock 알고리즘: 한 바퀴 돌면서 accessed bit 체크
-    while (true)
-    {
+    
+    struct thread *current = thread_current();
+    struct list_elem *e;
+    
+    /* 
+     * 3단계 전략:
+     * 1단계: 다른 프로세스의 accessed=0 페이지 찾기
+     * 2단계: 현재 프로세스의 accessed=0 페이지 찾기  
+     * 3단계: 아무거나 선택 (모든 페이지가 accessed=1)
+     */
+    
+    // 1단계: 다른 프로세스 + accessed=0
+    e = list_begin(&frame_table);
+    while (e != list_end(&frame_table)) {
+        struct frame *f = list_entry(e, struct frame, elem);
+        
+        if (f->page == NULL) {
+            lock_release(&frame_table_lock);
+            return f;
+        }
+        
+        struct page *page = f->page;
+        struct thread *owner = page->owner;
+        
+        // 소유자가 현재 프로세스가 아니고
+        if (owner != NULL && owner != current && owner->pml4 != NULL) {
+            // accessed bit가 0이면 즉시 선택
+            if (!pml4_is_accessed(owner->pml4, page->va)) {
+                lock_release(&frame_table_lock);
+                return f;
+            }
+        }
+        
+        e = list_next(e);
+    }
+    
+    // 2단계: 현재 프로세스 + accessed=0
+    e = list_begin(&frame_table);
+    while (e != list_end(&frame_table)) {
+        struct frame *f = list_entry(e, struct frame, elem);
+        
+        if (f->page == NULL) {
+            lock_release(&frame_table_lock);
+            return f;
+        }
+        
+        struct page *page = f->page;
+        struct thread *owner = page->owner;
+        
+        // 현재 프로세스의 페이지 중 accessed=0 찾기
+        if (owner != NULL && owner == current && owner->pml4 != NULL) {
+            if (!pml4_is_accessed(owner->pml4, page->va)) {
+                lock_release(&frame_table_lock);
+                return f;
+            }
+        }
+        
+        e = list_next(e);
+    }
+    
+    // 3단계: Clock 알고리즘 - 한 바퀴 돌면서 accessed bit 클리어
+    e = list_begin(&frame_table);
+    while (e != list_end(&frame_table)) {
         if (e == list_end(&frame_table))
             e = list_begin(&frame_table);
-
-        struct frame *victim = list_entry(e, struct frame, elem);
-
-        // 페이지가 없는 프레임은 건너뜀
-        if (victim->page == NULL)
-        {
-            e = list_next(e);
-            continue;
-        }
-
-        struct page *page = victim->page;
-
-        // 핵심: 페이지의 소유자 스레드의 pml4를 사용
-        struct thread *owner = page->owner;
-
-        // 소유자가 없거나 pml4가 없으면 즉시 victim으로 선택
-        if (owner == NULL || owner->pml4 == NULL)
-        {
+        
+        struct frame *f = list_entry(e, struct frame, elem);
+        
+        if (f->page == NULL) {
             lock_release(&frame_table_lock);
-            return victim;
+            return f;
         }
-
-        // Accessed bit 확인 (올바른 pml4 사용)
-        if (pml4_is_accessed(owner->pml4, page->va))
-        {
-            // Accessed bit를 클리어하고 다음으로
+        
+        struct page *page = f->page;
+        struct thread *owner = page->owner;
+        
+        if (owner == NULL || owner->pml4 == NULL) {
+            lock_release(&frame_table_lock);
+            return f;
+        }
+        
+        // Accessed bit 체크 및 클리어
+        if (pml4_is_accessed(owner->pml4, page->va)) {
             pml4_set_accessed(owner->pml4, page->va, false);
             e = list_next(e);
-        }
-        else
-        {
-            // Accessed bit가 0이면 이 페이지를 victim으로 선택
+        } else {
+            // accessed=0 발견
             lock_release(&frame_table_lock);
-            return victim;
+            return f;
         }
     }
+    
+    // 여기까지 왔으면 첫 번째 반환
+    lock_release(&frame_table_lock);
+    return list_entry(list_begin(&frame_table), struct frame, elem);
 }
 static struct frame *
 vm_evict_frame(void)
@@ -193,26 +209,7 @@ vm_evict_frame(void)
     return victim;
 }
 
-// static struct frame *
-// vm_get_frame(void)
-// {
-//     void *kva = palloc_get_page(PAL_USER);
-//     if (kva == NULL)
-//     {
-//         // 메모리 부족 - eviction 필요
-//         return vm_evict_frame();
-//     }
 
-//     struct frame *frame = malloc(sizeof(struct frame));
-//     frame->kva = kva;
-//     frame->page = NULL;
-
-//     lock_acquire(&frame_table_lock);
-//     list_push_back(&frame_table, &frame->elem);
-//     lock_release(&frame_table_lock);
-
-//     return frame;
-// }
 static struct frame *
 vm_get_frame(void)
 {
@@ -252,27 +249,7 @@ vm_get_frame(void)
     return frame;
 }
 
-// vm.c
-// static void
-// vm_stack_growth(void *addr)
-// {
-//     // 스택 포인터보다 아래에 있는 주소로 접근하면 스택을 확장
-//     void *stack_page = pg_round_down(addr);
 
-//     // 스택 크기 제한 체크 (보통 1MB 정도)
-//     if ((USER_STACK - (uint64_t)stack_page) > (1 << 20))
-//         return;
-
-//     // 추가: 주소가 너무 낮으면 실패
-//     if (stack_page < (void *)0x400000) // 임의의 최소 주소
-//         return;
-
-//     // 새 페이지 할당하고 claim
-//     if (vm_alloc_page(VM_ANON, stack_page, true))
-//     {
-//         vm_claim_page(stack_page);
-//     }
-// }
 static void
 vm_stack_growth(void *addr) {
     void *stack_page = pg_round_down(addr);
@@ -417,100 +394,7 @@ static bool spt_copy_page(struct hash_elem *e, void *aux)
 
     return true;
 }
-// bool supplemental_page_table_copy(struct supplemental_page_table *dst,
-//                                   struct supplemental_page_table *src)
-// {
-//     struct hash_iterator i;
-//     hash_first(&i, &src->pages);
 
-//     while (hash_next(&i))
-//     {
-//         struct page *src_page = hash_entry(hash_cur(&i), struct page, hash_elem);
-
-//         enum vm_type type = page_get_type(src_page);
-//         void *upage = src_page->va;
-//         bool writable = src_page->writable;
-
-//         /* UNINIT 페이지: aux를 복사해서 등록 */
-//         if (type == VM_UNINIT)
-//         {
-//             void *aux_copy = NULL;
-//             // if (src_page->uninit.aux != NULL) {
-//             //     struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
-//             //     struct lazy_load_arg *new_aux = malloc(sizeof(struct lazy_load_arg));
-//             //     if (new_aux == NULL)
-//             //         return false;
-
-//             //     new_aux->file = file_reopen(src_aux->file);
-//             //     if (new_aux->file == NULL) {
-//             //         free(new_aux);
-//             //         return false;
-//             //     }
-//             //     new_aux->ofs = src_aux->ofs;
-//             //     new_aux->read_bytes = src_aux->read_bytes;
-//             //     new_aux->zero_bytes = src_aux->zero_bytes;
-//             //     aux_copy = new_aux;
-//             // }
-//             // supplemental_page_table_copy에서 UNINIT 페이지 복사시
-//             if (src_page->uninit.aux != NULL)
-//             {
-//                 struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
-//                 struct lazy_load_arg *new_aux = malloc(sizeof(struct lazy_load_arg));
-//                 if (new_aux == NULL)
-//                     return false;
-
-//                 // 중요: file_reopen으로 독립적인 파일 참조 생성
-//                 new_aux->file = file_reopen(src_aux->file);
-//                 if (new_aux->file == NULL)
-//                 {
-//                     free(new_aux);
-//                     return false;
-//                 }
-//                 new_aux->ofs = src_aux->ofs;
-//                 new_aux->read_bytes = src_aux->read_bytes;
-//                 new_aux->zero_bytes = src_aux->zero_bytes;
-//                 aux_copy = new_aux;
-//             }
-
-//             if (!vm_alloc_page_with_initializer(src_page->uninit.type, upage,
-//                                                 writable, src_page->uninit.init, aux_copy))
-//             {
-//                 if (aux_copy != NULL)
-//                 {
-//                     struct lazy_load_arg *aux_arg = (struct lazy_load_arg *)aux_copy;
-//                     if (aux_arg->file != NULL)
-//                         file_close(aux_arg->file);
-//                     free(aux_copy);
-//                 }
-//                 return false;
-//             }
-//             continue;
-//         }
-
-//         /* ANON/FILE 페이지이지만 아직 claim 안 된 경우: 등록만 */
-//         if (src_page->frame == NULL)
-//         {
-//             if (!vm_alloc_page(type, upage, writable))
-//                 return false;
-//             continue;
-//         }
-
-//         /* 이미 claim된 페이지: 등록 + claim + 내용 복사 */
-//         if (!vm_alloc_page(type, upage, writable))
-//             return false;
-
-//         if (!vm_claim_page(upage))
-//             return false;
-
-//         struct page *dst_page = spt_find_page(dst, upage);
-//         if (dst_page == NULL || dst_page->frame == NULL)
-//             return false;
-
-//         memcpy(dst_page->frame->kva, src_page->frame->kva, PGSIZE);
-//     }
-
-//     return true;
-// }
 bool supplemental_page_table_copy(struct supplemental_page_table *dst,
                                   struct supplemental_page_table *src)
 {

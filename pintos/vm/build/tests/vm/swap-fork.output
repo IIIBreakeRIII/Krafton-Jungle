@@ -11,9 +11,9 @@ Booting from Hard Disk..Kernel command line: -q -f put swap-fork put child-swap 
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x27e0000 (Usable: 39,808 kB)
-Calibrating timer...  204,595,200 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 4,152 sector (2 MB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -47,13 +47,13 @@ child-swap: exit(0)
 (swap-fork) end
 swap-fork: exit(0)
 Execution of 'swap-fork' complete.
-Timer: 344 ticks
-Thread: 151 idle ticks, 101 kernel ticks, 92 user ticks
+Timer: 324 ticks
+Thread: 138 idle ticks, 96 kernel ticks, 91 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 620 reads, 8342 writes
 hd1:0: 4152 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1461 characters output
+Console: 1460 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...
