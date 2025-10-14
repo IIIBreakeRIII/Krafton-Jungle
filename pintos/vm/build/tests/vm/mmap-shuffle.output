@@ -5,14 +5,13 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk...
-Kernel command line: -q -f put mmap-shuffle run mmap-shuffle
+Booting from Hard Disk..Kernel command line: -q -f put mmap-shuffle run mmap-shuffle
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,857,600 loops/s.
+Calibrating timer...  150,528,000 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -41,8 +40,8 @@ Executing 'mmap-shuffle':
 (mmap-shuffle) end
 mmap-shuffle: exit(0)
 Execution of 'mmap-shuffle' complete.
-Timer: 360 ticks
-Thread: 22 idle ticks, 94 kernel ticks, 245 user ticks
+Timer: 232 ticks
+Thread: 17 idle ticks, 69 kernel ticks, 146 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 374 reads, 816 writes
 hd1:0: 132 reads, 0 writes

@@ -96,6 +96,31 @@ file_backed_swap_in (struct page *page, void *kva) {
     return true;
 }
 
+// static bool
+// file_backed_swap_out (struct page *page) {
+//     struct file_page *file_page = &page->file;
+    
+//     if (file_page->file == NULL)
+//         return false;
+    
+//     if (page->frame == NULL)
+//         return true;
+    
+//     // dirty bit 확인 후 파일에 쓰기
+//     if (pml4_is_dirty(thread_current()->pml4, page->va)) {
+//         file_write_at(file_page->file, page->frame->kva, 
+//                       file_page->read_bytes, file_page->offset);
+//         pml4_set_dirty(thread_current()->pml4, page->va, false);
+//     }
+    
+//     pml4_clear_page(thread_current()->pml4, page->va);
+    
+//     palloc_free_page(page->frame->kva);
+//     free(page->frame);
+//     page->frame = NULL;
+    
+//     return true;
+// }
 static bool
 file_backed_swap_out (struct page *page) {
     struct file_page *file_page = &page->file;
@@ -106,41 +131,75 @@ file_backed_swap_out (struct page *page) {
     if (page->frame == NULL)
         return true;
     
+    // 핵심: owner의 pml4 사용
+    struct thread *owner = page->owner;
+    if (owner == NULL || owner->pml4 == NULL)
+        return false;
+    
     // dirty bit 확인 후 파일에 쓰기
-    if (pml4_is_dirty(thread_current()->pml4, page->va)) {
+    if (pml4_is_dirty(owner->pml4, page->va)) {
         file_write_at(file_page->file, page->frame->kva, 
                       file_page->read_bytes, file_page->offset);
-        pml4_set_dirty(thread_current()->pml4, page->va, false);
+        pml4_set_dirty(owner->pml4, page->va, false);
     }
     
-    pml4_clear_page(thread_current()->pml4, page->va);
+    pml4_clear_page(owner->pml4, page->va);
     
+    // 물리 메모리만 해제
     palloc_free_page(page->frame->kva);
-    free(page->frame);
+    
+    // 연결만 끊음
+    page->frame->page = NULL;
     page->frame = NULL;
+    
+    // free(page->frame) 하지 않음!
     
     return true;
 }
+
+// static void
+// file_backed_destroy (struct page *page) {
+//     struct file_page *file_page = &page->file;
+    
+//     // 페이지가 메모리에 있고 dirty하면 파일에 쓰기
+//     if (page->frame != NULL) {
+//         if (pml4_is_dirty(thread_current()->pml4, page->va)) {
+//             file_write_at(file_page->file, page->frame->kva,
+//                           file_page->read_bytes, file_page->offset);
+//         }
+        
+//         pml4_clear_page(thread_current()->pml4, page->va);
+        
+//         palloc_free_page(page->frame->kva);
+//         free(page->frame);
+//         page->frame = NULL;
+//     }
+    
+//     // 파일은 여기서 닫지 않음 - do_munmap에서 한번만 닫음
+// }
 
 static void
 file_backed_destroy (struct page *page) {
     struct file_page *file_page = &page->file;
     
-    // 페이지가 메모리에 있고 dirty하면 파일에 쓰기
     if (page->frame != NULL) {
-        if (pml4_is_dirty(thread_current()->pml4, page->va)) {
-            file_write_at(file_page->file, page->frame->kva,
-                          file_page->read_bytes, file_page->offset);
+        struct thread *owner = page->owner;
+        
+        // owner의 pml4 사용
+        if (owner != NULL && owner->pml4 != NULL) {
+            if (pml4_is_dirty(owner->pml4, page->va)) {
+                file_write_at(file_page->file, page->frame->kva,
+                              file_page->read_bytes, file_page->offset);
+            }
+            pml4_clear_page(owner->pml4, page->va);
         }
         
-        pml4_clear_page(thread_current()->pml4, page->va);
-        
         palloc_free_page(page->frame->kva);
-        free(page->frame);
+        
+        // 연결만 끊음
+        page->frame->page = NULL;
         page->frame = NULL;
     }
-    
-    // 파일은 여기서 닫지 않음 - do_munmap에서 한번만 닫음
 }
 
 void *

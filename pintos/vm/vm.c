@@ -69,6 +69,8 @@ bool vm_alloc_page_with_initializer(enum vm_type type, void *upage, bool writabl
         uninit_new(page, upage, init, type, aux, page_initializer);
         page->writable = writable;
 
+        page->owner = thread_current();
+
         if (!spt_insert_page(spt, page))
         {
             free(page);
@@ -87,41 +89,96 @@ void spt_remove_page(struct supplemental_page_table *spt, struct page *page)
     vm_dealloc_page(page);
 }
 
+// static struct frame *
+// vm_get_victim(void)
+// {
+//     // Clock 알고리즘 구현 (Second Chance)
+//     lock_acquire(&frame_table_lock);
+
+//     struct list_elem *e = list_begin(&frame_table);
+//     while (true)
+//     {
+//         if (e == list_end(&frame_table))
+//             e = list_begin(&frame_table);
+
+//         struct frame *victim = list_entry(e, struct frame, elem);
+//         struct page *page = victim->page;
+
+//         if (page == NULL)
+//         {
+//             e = list_next(e);
+//             continue;
+//         }
+
+//         // Accessed bit 확인
+//         if (pml4_is_accessed(thread_current()->pml4, page->va))
+//         {
+//             pml4_set_accessed(thread_current()->pml4, page->va, false);
+//             e = list_next(e);
+//         }
+//         else
+//         {
+//             lock_release(&frame_table_lock);
+//             return victim;
+//         }
+//     }
+// }
+
 static struct frame *
 vm_get_victim(void)
 {
-    // Clock 알고리즘 구현 (Second Chance)
     lock_acquire(&frame_table_lock);
 
+    if (list_empty(&frame_table))
+    {
+        lock_release(&frame_table_lock);
+        return NULL;
+    }
+
     struct list_elem *e = list_begin(&frame_table);
+
+    // Clock 알고리즘: 한 바퀴 돌면서 accessed bit 체크
     while (true)
     {
         if (e == list_end(&frame_table))
             e = list_begin(&frame_table);
 
         struct frame *victim = list_entry(e, struct frame, elem);
-        struct page *page = victim->page;
 
-        if (page == NULL)
+        // 페이지가 없는 프레임은 건너뜀
+        if (victim->page == NULL)
         {
             e = list_next(e);
             continue;
         }
 
-        // Accessed bit 확인
-        if (pml4_is_accessed(thread_current()->pml4, page->va))
+        struct page *page = victim->page;
+
+        // 핵심: 페이지의 소유자 스레드의 pml4를 사용
+        struct thread *owner = page->owner;
+
+        // 소유자가 없거나 pml4가 없으면 즉시 victim으로 선택
+        if (owner == NULL || owner->pml4 == NULL)
         {
-            pml4_set_accessed(thread_current()->pml4, page->va, false);
+            lock_release(&frame_table_lock);
+            return victim;
+        }
+
+        // Accessed bit 확인 (올바른 pml4 사용)
+        if (pml4_is_accessed(owner->pml4, page->va))
+        {
+            // Accessed bit를 클리어하고 다음으로
+            pml4_set_accessed(owner->pml4, page->va, false);
             e = list_next(e);
         }
         else
         {
+            // Accessed bit가 0이면 이 페이지를 victim으로 선택
             lock_release(&frame_table_lock);
             return victim;
         }
     }
 }
-
 static struct frame *
 vm_evict_frame(void)
 {
@@ -136,17 +193,55 @@ vm_evict_frame(void)
     return victim;
 }
 
+// static struct frame *
+// vm_get_frame(void)
+// {
+//     void *kva = palloc_get_page(PAL_USER);
+//     if (kva == NULL)
+//     {
+//         // 메모리 부족 - eviction 필요
+//         return vm_evict_frame();
+//     }
+
+//     struct frame *frame = malloc(sizeof(struct frame));
+//     frame->kva = kva;
+//     frame->page = NULL;
+
+//     lock_acquire(&frame_table_lock);
+//     list_push_back(&frame_table, &frame->elem);
+//     lock_release(&frame_table_lock);
+
+//     return frame;
+// }
 static struct frame *
 vm_get_frame(void)
 {
     void *kva = palloc_get_page(PAL_USER);
+
     if (kva == NULL)
     {
         // 메모리 부족 - eviction 필요
-        return vm_evict_frame();
+        struct frame *victim = vm_evict_frame();
+
+        // victim은 이미 swap out되어서 page가 NULL 상태
+        // 물리 메모리를 새로 할당받아서 재사용
+        victim->kva = palloc_get_page(PAL_USER);
+        if (victim->kva == NULL)
+        {
+            PANIC("Cannot allocate page even after eviction");
+        }
+
+        return victim;
     }
 
+    // 새 프레임 할당
     struct frame *frame = malloc(sizeof(struct frame));
+    if (frame == NULL)
+    {
+        palloc_free_page(kva);
+        return NULL;
+    }
+
     frame->kva = kva;
     frame->page = NULL;
 
@@ -166,6 +261,10 @@ vm_stack_growth(void *addr)
 
     // 스택 크기 제한 체크 (보통 1MB 정도)
     if ((USER_STACK - (uint64_t)stack_page) > (1 << 20))
+        return;
+
+    // 추가: 주소가 너무 낮으면 실패
+    if (stack_page < (void *)0x400000) // 임의의 최소 주소
         return;
 
     // 새 페이지 할당하고 claim
@@ -393,78 +492,97 @@ static bool spt_copy_page(struct hash_elem *e, void *aux)
 
 //     return true;
 // }
-bool
-supplemental_page_table_copy (struct supplemental_page_table *dst,
-        struct supplemental_page_table *src) {
+bool supplemental_page_table_copy(struct supplemental_page_table *dst,
+                                  struct supplemental_page_table *src)
+{
     struct hash_iterator i;
     hash_first(&i, &src->pages);
-    
-    while (hash_next(&i)) {
+
+    while (hash_next(&i))
+    {
         struct page *src_page = hash_entry(hash_cur(&i), struct page, hash_elem);
-        
+
         enum vm_type type = page_get_type(src_page);
         void *upage = src_page->va;
         bool writable = src_page->writable;
-        
+
         // FILE 타입 페이지는 복사하지 않음 (mmap은 상속 안됨)
         if (type == VM_FILE)
             continue;
-        
+
         /* UNINIT 페이지 처리 */
-        if (type == VM_UNINIT) {
+        if (type == VM_UNINIT)
+        {
             // FILE 타입으로 초기화될 UNINIT 페이지도 복사 안함
             if (src_page->uninit.type == VM_FILE)
                 continue;
-            
+
             void *aux_copy = NULL;
-            if (src_page->uninit.aux != NULL) {
+            // if (src_page->uninit.aux != NULL) {
+            //     struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
+            //     struct lazy_load_arg *new_aux = malloc(sizeof(struct lazy_load_arg));
+            //     if (new_aux == NULL)
+            //         return false;
+
+            //     // 실행 파일의 경우: 같은 파일 포인터 공유 (reopen 안함!)
+            //     // 자식도 부모와 같은 실행 파일을 사용
+            //     new_aux->file = src_aux->file;
+            //     new_aux->ofs = src_aux->ofs;
+            //     new_aux->read_bytes = src_aux->read_bytes;
+            //     new_aux->zero_bytes = src_aux->zero_bytes;
+            //     aux_copy = new_aux;
+            // }
+            // UNINIT 페이지 복사시
+            if (src_page->uninit.aux != NULL)
+            {
                 struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
                 struct lazy_load_arg *new_aux = malloc(sizeof(struct lazy_load_arg));
                 if (new_aux == NULL)
                     return false;
-                
-                // 실행 파일의 경우: 같은 파일 포인터 공유 (reopen 안함!)
-                // 자식도 부모와 같은 실행 파일을 사용
-                new_aux->file = src_aux->file;
+
+                // 핵심: file은 NULL로 설정
+                // lazy_load_segment에서 thread_current()->runn_file을 사용하게 됨
+                new_aux->file = NULL; // 이렇게 수정!
                 new_aux->ofs = src_aux->ofs;
                 new_aux->read_bytes = src_aux->read_bytes;
                 new_aux->zero_bytes = src_aux->zero_bytes;
                 aux_copy = new_aux;
             }
-            
-            if (!vm_alloc_page_with_initializer(src_page->uninit.type, upage, 
-                                               writable, src_page->uninit.init, aux_copy)) {
+
+            if (!vm_alloc_page_with_initializer(src_page->uninit.type, upage,
+                                                writable, src_page->uninit.init, aux_copy))
+            {
                 if (aux_copy != NULL)
                     free(aux_copy);
                 return false;
             }
             continue;
         }
-        
+
         /* ANON 페이지 처리 */
-        if (src_page->frame == NULL) {
+        if (src_page->frame == NULL)
+        {
             if (!vm_alloc_page(type, upage, writable))
                 return false;
             continue;
         }
-        
+
         /* claim된 ANON 페이지 복사 */
         if (!vm_alloc_page(type, upage, writable))
             return false;
-        
+
         if (!vm_claim_page(upage))
             return false;
-        
+
         struct page *dst_page = spt_find_page(dst, upage);
         if (dst_page == NULL || dst_page->frame == NULL)
             return false;
-        
+
         memcpy(dst_page->frame->kva, src_page->frame->kva, PGSIZE);
     }
-    
+
     return true;
 }
-
 
 /* 각 페이지를 destroy하는 액션 함수 */
 static void spt_destroy_page(struct hash_elem *e, void *aux UNUSED)

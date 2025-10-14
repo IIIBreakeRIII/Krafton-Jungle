@@ -1057,35 +1057,7 @@ install_page(void *upage, void *kpage, bool writable)
  *
  * 성공 시 true, 메모리 할당 오류나 디스크 읽기 오류 시 false를 반환합니다. */
 /* Page fault 발생 시 실제로 파일에서 데이터를 읽어오는 함수 */
-// static bool
-// lazy_load_segment(struct page *page, void *aux)
-// {
-//     struct lazy_load_arg *args = (struct lazy_load_arg *)aux;
-    
-//     // frame이 할당되어 있어야 함
-//     ASSERT(page->frame != NULL);
-//     void *kva = page->frame->kva;
-    
-//     // file_seek + file_read 대신 file_read_at 사용
-//     // file_read_at은 thread-safe하고 파일 위치를 변경하지 않음
-//     off_t bytes_read = file_read_at(args->file, kva, 
-//                                      args->read_bytes, args->ofs);
-    
-//     if (bytes_read != (off_t)args->read_bytes) {
-//         return false;
-//     }
-    
-//     // 나머지 부분은 0으로 채움
-//     memset(kva + args->read_bytes, 0, args->zero_bytes);
-    
-//     // 주의: file_close와 free를 여기서 하면 안됨
-//     // 이유:
-//     // 1. 여러 페이지가 같은 file 포인터를 공유할 수 있음
-//     // 2. aux는 uninit_destroy에서 정리됨
-//     // 3. file은 process_cleanup에서 정리되거나, mmap의 경우 do_munmap에서 정리됨
-    
-//     return true;
-// }
+
 static bool
 lazy_load_segment(struct page *page, void *aux)
 {
@@ -1094,8 +1066,19 @@ lazy_load_segment(struct page *page, void *aux)
     ASSERT(page->frame != NULL);
     void *kva = page->frame->kva;
     
-    // file_read_at 사용 (thread-safe)
-    off_t bytes_read = file_read_at(args->file, kva, 
+    // 핵심 수정: aux->file이 부모의 파일을 가리킬 수 있으므로
+    // 대신 현재 스레드의 runn_file을 사용
+    struct file *file = args->file;
+    if (file == NULL) {
+        // file이 NULL이면 현재 스레드의 실행 파일 사용
+        file = thread_current()->runn_file;
+    }
+    
+    if (file == NULL) {
+        return false;
+    }
+    
+    off_t bytes_read = file_read_at(file, kva, 
                                      args->read_bytes, args->ofs);
     
     if (bytes_read != (off_t)args->read_bytes) {
@@ -1104,57 +1087,10 @@ lazy_load_segment(struct page *page, void *aux)
     
     memset(kva + args->read_bytes, 0, args->zero_bytes);
     
-    // 주의: 여기서 file을 닫으면 안됨!
-    // 실행 파일은 process_exit에서 한번만 닫음
-    
     return true;
 }
 
-// static bool
-// load_segment(struct file *file, off_t ofs, uint8_t *upage,
-// 			 uint32_t read_bytes, uint32_t zero_bytes, bool writable)
-// {
-// 	ASSERT((read_bytes + zero_bytes) % PGSIZE == 0);
-// 	ASSERT(pg_ofs(upage) == 0);
-// 	ASSERT(ofs % PGSIZE == 0);
 
-// 	while (read_bytes > 0 || zero_bytes > 0)
-// 	{
-// 		size_t page_read_bytes = read_bytes < PGSIZE ? read_bytes : PGSIZE;
-// 		size_t page_zero_bytes = PGSIZE - page_read_bytes;
-
-// 		// 구조체 메모리 할당
-// 		struct lazy_load_arg *aux = malloc(sizeof(struct lazy_load_arg));
-// 		if (aux == NULL)
-// 			return false;
-
-// 		// 필드 채우기
-// 		aux->file = file_reopen(file);
-// 		if (aux->file == NULL)
-// 		{
-// 			free(aux);
-// 			return false;
-// 		}
-// 		aux->ofs = ofs;
-// 		aux->read_bytes = page_read_bytes;
-// 		aux->zero_bytes = page_zero_bytes;
-
-// 		// Lazy loading: 등록만 하고 로드는 나중에
-// 		if (!vm_alloc_page_with_initializer(VM_ANON, upage, writable,
-// 											lazy_load_segment, aux))
-// 		{
-// 			free(aux);
-// 			return false;
-// 		}
-
-// 		// 다음으로 진행
-// 		read_bytes -= page_read_bytes;
-// 		zero_bytes -= page_zero_bytes;
-// 		upage += PGSIZE;
-// 		ofs += PGSIZE; // ← 이게 핵심!
-// 	}
-// 	return true;
-// }
 static bool
 load_segment(struct file *file, off_t ofs, uint8_t *upage,
              uint32_t read_bytes, uint32_t zero_bytes, bool writable)

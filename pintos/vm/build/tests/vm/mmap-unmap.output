@@ -5,13 +5,14 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put mmap-unmap put sample.txt run mmap-unmap
+Booting from Hard Disk...
+Kernel command line: -q -f put mmap-unmap put sample.txt run mmap-unmap
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,857,600 loops/s.
+Calibrating timer...  183,296,000 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -30,13 +31,13 @@ Executing 'mmap-unmap':
 (mmap-unmap) memory is readable 540888381
 mmap-unmap: exit(-1)
 Execution of 'mmap-unmap' complete.
-Timer: 121 ticks
-Thread: 6 idle ticks, 99 kernel ticks, 17 user ticks
+Timer: 89 ticks
+Thread: 9 idle ticks, 71 kernel ticks, 9 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 119 reads, 288 writes
 hd1:0: 125 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1199 characters output
+Console: 1197 characters output
 Keyboard: 0 keys pressed
 Exception: 1 page faults
 Powering off...
