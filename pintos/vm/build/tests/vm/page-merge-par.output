@@ -12,9 +12,9 @@ Kernel command line: -q -f put page-merge-par put child-sort run page-merge-par
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  209,510,400 loops/s.
+Calibrating timer...  84,889,600 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 253 sector (126 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -43,19 +43,20 @@ child-sort: exit(-1)
 load: child-sort: open failed
 child-sort: exit(-1)
 (page-merge-par) sort chunk 6
+load: child-sort: open failed
+child-sort: exit(-1)
 (page-merge-par) sort chunk 7
-child-sort: exit(123)
 (page-merge-par) wait for child 0
 (page-merge-par) wait for child 0: FAILED
 page-merge-par: exit(1)
 Execution of 'page-merge-par' complete.
-Timer: 252 ticks
-Thread: 61 idle ticks, 71 kernel ticks, 121 user ticks
+Timer: 355 ticks
+Thread: 78 idle ticks, 99 kernel ticks, 178 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 716 reads, 4992 writes
+hd0:1: 426 reads, 4736 writes
 hd1:0: 253 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1700 characters output
+Console: 1728 characters output
 Keyboard: 0 keys pressed
-Exception: 5 page faults
+Exception: 6 page faults
 Powering off...

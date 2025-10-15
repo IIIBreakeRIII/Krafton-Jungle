@@ -1057,7 +1057,58 @@ install_page(void *upage, void *kpage, bool writable)
  *
  * 성공 시 true, 메모리 할당 오류나 디스크 읽기 오류 시 false를 반환합니다. */
 /* Page fault 발생 시 실제로 파일에서 데이터를 읽어오는 함수 */
-
+// static bool
+// lazy_load_segment(struct page *page, void *aux)
+// {
+//     struct lazy_load_arg *args = (struct lazy_load_arg *)aux;
+    
+//     // frame이 할당되어 있어야 함
+//     ASSERT(page->frame != NULL);
+//     void *kva = page->frame->kva;
+    
+//     // file_seek + file_read 대신 file_read_at 사용
+//     // file_read_at은 thread-safe하고 파일 위치를 변경하지 않음
+//     off_t bytes_read = file_read_at(args->file, kva, 
+//                                      args->read_bytes, args->ofs);
+    
+//     if (bytes_read != (off_t)args->read_bytes) {
+//         return false;
+//     }
+    
+//     // 나머지 부분은 0으로 채움
+//     memset(kva + args->read_bytes, 0, args->zero_bytes);
+    
+//     // 주의: file_close와 free를 여기서 하면 안됨
+//     // 이유:
+//     // 1. 여러 페이지가 같은 file 포인터를 공유할 수 있음
+//     // 2. aux는 uninit_destroy에서 정리됨
+//     // 3. file은 process_cleanup에서 정리되거나, mmap의 경우 do_munmap에서 정리됨
+    
+//     return true;
+// }
+// static bool
+// lazy_load_segment(struct page *page, void *aux)
+// {
+//     struct lazy_load_arg *args = (struct lazy_load_arg *)aux;
+    
+//     ASSERT(page->frame != NULL);
+//     void *kva = page->frame->kva;
+    
+//     // file_read_at 사용 (thread-safe)
+//     off_t bytes_read = file_read_at(args->file, kva, 
+//                                      args->read_bytes, args->ofs);
+    
+//     if (bytes_read != (off_t)args->read_bytes) {
+//         return false;
+//     }
+    
+//     memset(kva + args->read_bytes, 0, args->zero_bytes);
+    
+//     // 주의: 여기서 file을 닫으면 안됨!
+//     // 실행 파일은 process_exit에서 한번만 닫음
+    
+//     return true;
+// }
 static bool
 lazy_load_segment(struct page *page, void *aux)
 {

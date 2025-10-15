@@ -11,9 +11,9 @@ Booting from Hard Disk..Kernel command line: -q -f put lazy-file put sample.txt 
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  183,296,000 loops/s.
+Calibrating timer...  104,755,200 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 168 sector (84 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -49,13 +49,13 @@ Executing 'lazy-file':
 (lazy-file) end
 lazy-file: exit(0)
 Execution of 'lazy-file' complete.
-Timer: 105 ticks
-Thread: 9 idle ticks, 76 kernel ticks, 21 user ticks
+Timer: 127 ticks
+Thread: 15 idle ticks, 82 kernel ticks, 30 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 189 reads, 384 writes
 hd1:0: 168 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1849 characters output
+Console: 1850 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

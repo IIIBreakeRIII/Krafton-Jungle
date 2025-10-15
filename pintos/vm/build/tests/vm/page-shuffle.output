@@ -14,7 +14,7 @@ Pintos booting with:
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
 Calibrating timer...  104,755,200 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 130 sector (65 kB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -38,13 +38,13 @@ Executing 'page-shuffle':
 (page-shuffle) end
 page-shuffle: exit(0)
 Execution of 'page-shuffle' complete.
-Timer: 224 ticks
-Thread: 6 idle ticks, 73 kernel ticks, 146 user ticks
+Timer: 323 ticks
+Thread: 10 idle ticks, 75 kernel ticks, 238 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 89 reads, 288 writes
 hd1:0: 130 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1490 characters output
+Console: 1491 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

@@ -89,111 +89,61 @@ void spt_remove_page(struct supplemental_page_table *spt, struct page *page)
     vm_dealloc_page(page);
 }
 
-/* vm.c */
 
 static struct frame *
-vm_get_victim(void) {
+vm_get_victim(void)
+{
     lock_acquire(&frame_table_lock);
-    
-    if (list_empty(&frame_table)) {
+
+    if (list_empty(&frame_table))
+    {
         lock_release(&frame_table_lock);
-        PANIC("No frames in frame table");
+        return NULL;
     }
-    
-    struct thread *current = thread_current();
-    struct list_elem *e;
-    
-    /* 
-     * 3단계 전략:
-     * 1단계: 다른 프로세스의 accessed=0 페이지 찾기
-     * 2단계: 현재 프로세스의 accessed=0 페이지 찾기  
-     * 3단계: 아무거나 선택 (모든 페이지가 accessed=1)
-     */
-    
-    // 1단계: 다른 프로세스 + accessed=0
-    e = list_begin(&frame_table);
-    while (e != list_end(&frame_table)) {
-        struct frame *f = list_entry(e, struct frame, elem);
-        
-        if (f->page == NULL) {
-            lock_release(&frame_table_lock);
-            return f;
-        }
-        
-        struct page *page = f->page;
-        struct thread *owner = page->owner;
-        
-        // 소유자가 현재 프로세스가 아니고
-        if (owner != NULL && owner != current && owner->pml4 != NULL) {
-            // accessed bit가 0이면 즉시 선택
-            if (!pml4_is_accessed(owner->pml4, page->va)) {
-                lock_release(&frame_table_lock);
-                return f;
-            }
-        }
-        
-        e = list_next(e);
-    }
-    
-    // 2단계: 현재 프로세스 + accessed=0
-    e = list_begin(&frame_table);
-    while (e != list_end(&frame_table)) {
-        struct frame *f = list_entry(e, struct frame, elem);
-        
-        if (f->page == NULL) {
-            lock_release(&frame_table_lock);
-            return f;
-        }
-        
-        struct page *page = f->page;
-        struct thread *owner = page->owner;
-        
-        // 현재 프로세스의 페이지 중 accessed=0 찾기
-        if (owner != NULL && owner == current && owner->pml4 != NULL) {
-            if (!pml4_is_accessed(owner->pml4, page->va)) {
-                lock_release(&frame_table_lock);
-                return f;
-            }
-        }
-        
-        e = list_next(e);
-    }
-    
-    // 3단계: Clock 알고리즘 - 한 바퀴 돌면서 accessed bit 클리어
-    e = list_begin(&frame_table);
-    while (e != list_end(&frame_table)) {
+
+    struct list_elem *e = list_begin(&frame_table);
+
+    // Clock 알고리즘: 한 바퀴 돌면서 accessed bit 체크
+    while (true)
+    {
         if (e == list_end(&frame_table))
             e = list_begin(&frame_table);
-        
-        struct frame *f = list_entry(e, struct frame, elem);
-        
-        if (f->page == NULL) {
-            lock_release(&frame_table_lock);
-            return f;
+
+        struct frame *victim = list_entry(e, struct frame, elem);
+
+        // 페이지가 없는 프레임은 건너뜀
+        if (victim->page == NULL)
+        {
+            e = list_next(e);
+            continue;
         }
-        
-        struct page *page = f->page;
+
+        struct page *page = victim->page;
+
+        // 핵심: 페이지의 소유자 스레드의 pml4를 사용
         struct thread *owner = page->owner;
-        
-        if (owner == NULL || owner->pml4 == NULL) {
+
+        // 소유자가 없거나 pml4가 없으면 즉시 victim으로 선택
+        if (owner == NULL || owner->pml4 == NULL)
+        {
             lock_release(&frame_table_lock);
-            return f;
+            return victim;
         }
-        
-        // Accessed bit 체크 및 클리어
-        if (pml4_is_accessed(owner->pml4, page->va)) {
+
+        // Accessed bit 확인 (올바른 pml4 사용)
+        if (pml4_is_accessed(owner->pml4, page->va))
+        {
+            // Accessed bit를 클리어하고 다음으로
             pml4_set_accessed(owner->pml4, page->va, false);
             e = list_next(e);
-        } else {
-            // accessed=0 발견
+        }
+        else
+        {
+            // Accessed bit가 0이면 이 페이지를 victim으로 선택
             lock_release(&frame_table_lock);
-            return f;
+            return victim;
         }
     }
-    
-    // 여기까지 왔으면 첫 번째 반환
-    lock_release(&frame_table_lock);
-    return list_entry(list_begin(&frame_table), struct frame, elem);
 }
 static struct frame *
 vm_evict_frame(void)

@@ -5,15 +5,16 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0098B4A0+008CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk..Kernel command line: -q -f put swap-iter put large.txt run swap-iter
+Booting from Hard Disk...
+Kernel command line: -q -f put swap-iter put large.txt run swap-iter
 0 ~ 9fc00 1
 100000 ~ 9e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x9e0000 (Usable: 9,088 kB)
-Calibrating timer...  130,867,200 loops/s.
+Calibrating timer...  104,755,200 loops/s.
 hd0: unexpected interrupt
-hd0:0: detected 353 sector (176 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
 hd1: unexpected interrupt
 hd1:0: detected 7,949 sector (3 MB) disk, model "QEMU HARDDISK", serial "QM00003"
@@ -49,12 +50,12 @@ Executing 'swap-iter':
 (swap-iter) end
 swap-iter: exit(0)
 Execution of 'swap-iter' complete.
-Timer: 4604 ticks
-Thread: 2189 idle ticks, 132 kernel ticks, 2283 user ticks
+Timer: 5125 ticks
+Thread: 2622 idle ticks, 190 kernel ticks, 2313 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 11854 reads, 15936 writes
 hd1:0: 7949 reads, 0 writes
-hd1:1: 45016 reads, 84120 writes
+hd1:1: 44216 reads, 79424 writes
 Console: 1980 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults

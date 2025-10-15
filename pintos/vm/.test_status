@@ -15,7 +15,7 @@ read-bad-fd PASS
 priority-donate-multiple FAIL
 args-multiple PASS
 lg-seq-random PASS
-syn-write PASS
+syn-write FAIL
 syn-remove PASS
 priority-donate-one FAIL
 mmap-overlap PASS
@@ -70,7 +70,7 @@ close-twice PASS
 mmap-over-data PASS
 args-none PASS
 mmap-kernel PASS
-swap-fork PASS
+swap-fork FAIL
 create-bad-ptr PASS
 read-stdout PASS
 priority-fifo FAIL
