@@ -371,21 +371,7 @@ bool supplemental_page_table_copy(struct supplemental_page_table *dst,
                 continue;
 
             void *aux_copy = NULL;
-            // if (src_page->uninit.aux != NULL) {
-            //     struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
-            //     struct lazy_load_arg *new_aux = malloc(sizeof(struct lazy_load_arg));
-            //     if (new_aux == NULL)
-            //         return false;
 
-            //     // 실행 파일의 경우: 같은 파일 포인터 공유 (reopen 안함!)
-            //     // 자식도 부모와 같은 실행 파일을 사용
-            //     new_aux->file = src_aux->file;
-            //     new_aux->ofs = src_aux->ofs;
-            //     new_aux->read_bytes = src_aux->read_bytes;
-            //     new_aux->zero_bytes = src_aux->zero_bytes;
-            //     aux_copy = new_aux;
-            // }
-            // UNINIT 페이지 복사시
             if (src_page->uninit.aux != NULL)
             {
                 struct lazy_load_arg *src_aux = (struct lazy_load_arg *)src_page->uninit.aux;
@@ -393,9 +379,9 @@ bool supplemental_page_table_copy(struct supplemental_page_table *dst,
                 if (new_aux == NULL)
                     return false;
 
-                // 핵심: file은 NULL로 설정
+                // file은 NULL로 설정
                 // lazy_load_segment에서 thread_current()->runn_file을 사용하게 됨
-                new_aux->file = NULL; // 이렇게 수정!
+                new_aux->file = NULL; 
                 new_aux->ofs = src_aux->ofs;
                 new_aux->read_bytes = src_aux->read_bytes;
                 new_aux->zero_bytes = src_aux->zero_bytes;
@@ -493,4 +479,14 @@ bool spt_insert_page(struct supplemental_page_table *spt, struct page *page)
     }
 
     return false;
+}
+void vm_frame_free(struct frame *frame) {
+    if (frame == NULL)
+        return;
+    
+    lock_acquire(&frame_table_lock);
+    list_remove(&frame->elem);
+    lock_release(&frame_table_lock);
+    
+    free(frame);
 }

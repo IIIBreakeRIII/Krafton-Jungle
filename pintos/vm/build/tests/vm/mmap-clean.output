@@ -11,7 +11,7 @@ Booting from Hard Disk..Kernel command line: -q -f put mmap-clean put sample.txt
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,755,200 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -34,13 +34,13 @@ Executing 'mmap-clean':
 (mmap-clean) end
 mmap-clean: exit(0)
 Execution of 'mmap-clean' complete.
-Timer: 112 ticks
-Thread: 8 idle ticks, 84 kernel ticks, 21 user ticks
+Timer: 97 ticks
+Thread: 5 idle ticks, 76 kernel ticks, 16 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 126 reads, 297 writes
 hd1:0: 129 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1309 characters output
+Console: 1308 characters output
 Keyboard: 0 keys pressed
 Exception: 0 page faults
 Powering off...

@@ -4,6 +4,8 @@
 #include "threads/palloc.h"
 #include "hash.h"
 #include "filesys/off_t.h"
+
+
 enum vm_type {
 	/* page not initialized */
 	VM_UNINIT = 0,
@@ -120,5 +122,6 @@ bool vm_alloc_page_with_initializer (enum vm_type type, void *upage,
 void vm_dealloc_page (struct page *page);
 bool vm_claim_page (void *va);
 enum vm_type page_get_type (struct page *page);
+void vm_frame_free(struct frame *frame);
 
 #endif  /* VM_VM_H */

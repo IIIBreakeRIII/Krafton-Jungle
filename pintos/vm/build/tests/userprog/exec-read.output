@@ -12,7 +12,7 @@ Kernel command line: -q -f put exec-read put sample.txt put child-read run exec-
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,755,200 loops/s.
+Calibrating timer...  198,041,600 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -39,8 +39,8 @@ child-read: exit(0)
 (exec-read) end
 exec-read: exit(0)
 Execution of 'exec-read' complete.
-Timer: 124 ticks
-Thread: 19 idle ticks, 77 kernel ticks, 29 user ticks
+Timer: 114 ticks
+Thread: 13 idle ticks, 83 kernel ticks, 18 user ticks
 hd0:0: 0 reads, 0 writes
 hd0:1: 216 reads, 574 writes
 hd1:0: 263 reads, 0 writes

@@ -5,14 +5,13 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+0138B4A0+012CB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk...
-Kernel command line: -q -f put page-merge-mm put child-qsort-mm run page-merge-mm
+Booting from Hard Disk..Kernel command line: -q -f put page-merge-mm put child-qsort-mm run page-merge-mm
 0 ~ 9fc00 1
 100000 ~ 13e0000 1
 Pintos booting with: 
 	base_mem: 0x0 ~ 0x9fc00 (Usable: 639 kB)
 	ext_mem: 0x100000 ~ 0x13e0000 (Usable: 19,328 kB)
-Calibrating timer...  104,755,200 loops/s.
+Calibrating timer...  157,081,600 loops/s.
 hd0: unexpected interrupt
 hd0:0: detected 345 sector (172 kB) disk, model "QEMU HARDDISK", serial "QM00001"
 hd0:1: detected 20,160 sector (9 MB) disk, model "QEMU HARDDISK", serial "QM00002"
@@ -31,34 +30,30 @@ Executing 'page-merge-mm':
 load: child-qsort-mm: open failed
 child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 2
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 3
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 4
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) sort chunk 5
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
+child-qsort-mm: exit(80)
+child-qsort-mm: exit(80)
 (page-merge-mm) sort chunk 6
 load: child-qsort-mm: open failed
 child-qsort-mm: exit(-1)
+child-qsort-mm: exit(80)
+child-qsort-mm: exit(80)
 (page-merge-mm) sort chunk 7
-load: child-qsort-mm: open failed
-child-qsort-mm: exit(-1)
 (page-merge-mm) wait for child 0
 (page-merge-mm) wait for child 0: FAILED
 page-merge-mm: exit(1)
+load: child-qsort-mm: open failed
+child-qsort-mm: exit(-1)
 Execution of 'page-merge-mm' complete.
-Timer: 445 ticks
-Thread: 108 idle ticks, 121 kernel ticks, 217 user ticks
+Timer: 383 ticks
+Thread: 105 idle ticks, 96 kernel ticks, 182 user ticks
 hd0:0: 0 reads, 0 writes
-hd0:1: 398 reads, 4748 writes
+hd0:1: 1643 reads, 5264 writes
 hd1:0: 259 reads, 0 writes
 hd1:1: 0 reads, 0 writes
-Console: 1828 characters output
+Console: 1692 characters output
 Keyboard: 0 keys pressed
-Exception: 7 page faults
+Exception: 3 page faults
 Powering off...

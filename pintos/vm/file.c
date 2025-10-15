@@ -139,6 +139,8 @@ file_backed_swap_out(struct page *page)
 }
 
 
+// file.c의 157번째 줄 근처 수정
+// 잘못된 함수 이름을 file_write_at로 바꿔라
 
 static void
 file_backed_destroy(struct page *page)
@@ -149,25 +151,23 @@ file_backed_destroy(struct page *page)
     {
         struct thread *owner = page->owner;
 
-        // owner의 pml4 사용
         if (owner != NULL && owner->pml4 != NULL)
         {
             if (pml4_is_dirty(owner->pml4, page->va))
             {
-                file_write_at(file_page->file, page->frame->kva,
+                file_write_at(file_page->file, page->frame->kva,  // 이 줄
                               file_page->read_bytes, file_page->offset);
             }
             pml4_clear_page(owner->pml4, page->va);
         }
 
         palloc_free_page(page->frame->kva);
+        
+        vm_frame_free(page->frame);
 
-        // 연결만 끊음
-        page->frame->page = NULL;
         page->frame = NULL;
     }
 }
-
 void *
 do_mmap(void *addr, size_t length, int writable,
         struct file *file, off_t offset)
@@ -196,7 +196,7 @@ do_mmap(void *addr, size_t length, int writable,
     if (is_kernel_vaddr((void *)((uint64_t)addr + length - 1)))
         return NULL;
 
-    // 파일의 독립적인 참조 생성 (중요!)
+    // 파일의 독립적인 참조 생성 
     struct file *reopened_file = file_reopen(file);
     if (reopened_file == NULL)
         return NULL;
