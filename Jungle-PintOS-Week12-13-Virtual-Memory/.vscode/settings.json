@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "file.h": "c",
+        "vm.h": "c",
+        "process.h": "c",
+        "vaddr.h": "c",
+        "thread.h": "c",
+        "synch.h": "c",
+        "loader.h": "c",
+        "init.h": "c"
+    }
+}
