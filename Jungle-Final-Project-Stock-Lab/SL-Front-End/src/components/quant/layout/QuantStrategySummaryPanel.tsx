@@ -1,0 +1,904 @@
+"use client";
+
+import { getCurrentDate, getOneYearAgo } from "@/lib/date-utils";
+import { useBacktestConfigStore } from "@/stores/backtestConfigStore";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { AIHelperSidebar } from "./AIHelperSidebar";
+
+interface QuantStrategySummaryPanelProps {
+  activeTab: "buy" | "sell" | "target";
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
+
+interface SummaryTabsType {
+  tabName: "buy" | "sell" | "target";
+  tabDisplayName: string;
+  items: {
+    [key: string]: string;
+  }[];
+}
+
+/**
+ * 퀀트 전략 생성 페이지의 우측 요약 패널
+ * - 설정한 조건들의 요약 표시
+ * - 화살표 버튼으로 열기/닫기 가능
+ * - 닫혀도 완전히 사라지지 않고 화살표만 표시
+ */
+
+export default function QuantStrategySummaryPanel({
+  activeTab,
+  isOpen,
+  setIsOpen,
+}: QuantStrategySummaryPanelProps) {
+  const [selectedSummaryTab, setSelectedSummaryTab] = useState<
+    "buy" | "sell" | "target"
+  >(activeTab);
+
+  // 요약보기 / AI 헬퍼 패널 모드
+  const [panelMode, setPanelMode] = useState<"summary" | "ai_helper">("summary");
+
+  // 클라이언트 전용 마운트 상태
+  const [isMounted, setIsMounted] = useState(false);
+
+  // ✅ useShallow hook 사용 (Zustand 5.0+)
+  // 데이터 필드들을 객체로 선택 (useShallow가 얕은 비교 수행)
+  const {
+    is_day_or_month,
+    initial_investment,
+    start_date,
+    end_date,
+    commission_rate,
+    slippage,
+    buyConditionsUI,
+    buy_logic,
+    priority_factor,
+    priority_order,
+    per_stock_ratio,
+    max_holdings,
+    max_buy_value,
+    max_daily_stock,
+    buy_price_basis,
+    buy_price_offset,
+    target_and_loss,
+    hold_days,
+    sellConditionsUI,
+    condition_sell,
+    trade_targets,
+  } = useBacktestConfigStore(
+    useShallow((state) => ({
+      is_day_or_month: state.is_day_or_month,
+      initial_investment: state.initial_investment,
+      start_date: state.start_date,
+      end_date: state.end_date,
+      commission_rate: state.commission_rate,
+      slippage: state.slippage,
+      buyConditionsUI: state.buyConditionsUI,
+      buy_logic: state.buy_logic,
+      priority_factor: state.priority_factor,
+      priority_order: state.priority_order,
+      per_stock_ratio: state.per_stock_ratio,
+      max_holdings: state.max_holdings,
+      max_buy_value: state.max_buy_value,
+      max_daily_stock: state.max_daily_stock,
+      buy_price_basis: state.buy_price_basis,
+      buy_price_offset: state.buy_price_offset,
+      target_and_loss: state.target_and_loss,
+      hold_days: state.hold_days,
+      sellConditionsUI: state.sellConditionsUI,
+      condition_sell: state.condition_sell,
+      trade_targets: state.trade_targets,
+    })),
+  );
+
+  // setter 함수들은 별도로 선택 (안정적인 참조)
+  const setStartDate = useBacktestConfigStore((state) => state.setStartDate);
+  const setEndDate = useBacktestConfigStore((state) => state.setEndDate);
+  const addBuyConditionUIWithData = useBacktestConfigStore((state) => state.addBuyConditionUIWithData);
+  const addSellConditionUIWithData = useBacktestConfigStore((state) => state.addSellConditionUIWithData);
+  const setBuyConditionsUI = useBacktestConfigStore((state) => state.setBuyConditionsUI);
+  const setSellConditionsUI = useBacktestConfigStore((state) => state.setSellConditionsUI);
+  const setBuyLogic = useBacktestConfigStore((state) => state.setBuyLogic);
+  const setConditionSell = useBacktestConfigStore((state) => state.setConditionSell);
+  const setTargetAndLoss = useBacktestConfigStore((state) => state.setTargetAndLoss);
+  const setHoldDays = useBacktestConfigStore((state) => state.setHoldDays);
+  const setPriorityFactor = useBacktestConfigStore((state) => state.setPriorityFactor);
+  const setPriorityOrder = useBacktestConfigStore((state) => state.setPriorityOrder);
+  const setPerStockRatio = useBacktestConfigStore((state) => state.setPerStockRatio);
+  const setMaxHoldings = useBacktestConfigStore((state) => state.setMaxHoldings);
+  const setMaxBuyValue = useBacktestConfigStore((state) => state.setMaxBuyValue);
+  const setMaxDailyStock = useBacktestConfigStore((state) => state.setMaxDailyStock);
+  const setBuyPriceBasis = useBacktestConfigStore((state) => state.setBuyPriceBasis);
+  const setBuyPriceOffset = useBacktestConfigStore((state) => state.setBuyPriceOffset);
+  const setTradeTargets = useBacktestConfigStore((state) => state.setTradeTargets);
+
+  // AI 헬퍼로 새 전략을 적용할 때 기존 조건/논리 초기화
+  const resetConditionsFromHelper = () => {
+    setBuyConditionsUI([]);
+    setSellConditionsUI([]);
+    setBuyLogic("");
+    setConditionSell(null);
+    setTargetAndLoss(null);
+    setHoldDays(null);
+    setPriorityFactor("");
+    setPriorityOrder("desc");
+    setPerStockRatio(0);
+    setMaxHoldings(0);
+    setMaxBuyValue(null);
+    setMaxDailyStock(null);
+    setBuyPriceBasis("전일 종가");
+    setBuyPriceOffset(0);
+    setTradeTargets({
+      use_all_stocks: true,
+      selected_themes: [],
+      selected_stocks: [],
+    });
+  };
+
+  // 날짜 초기화 (클라이언트 사이드에서만 실행)
+  // setter 함수는 안정적이므로 dependency에서 제외 (React Compiler가 자동 처리)
+  useEffect(() => {
+    if (!start_date || !end_date) {
+      setStartDate(getOneYearAgo());
+      setEndDate(getCurrentDate());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start_date, end_date, setEndDate, setStartDate]);
+
+  // 클라이언트 마운트 감지
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // 탭 동기화
+  useEffect(() => {
+    setSelectedSummaryTab(activeTab);
+  }, [activeTab]);
+
+  // AI 헬퍼에서 생성된 조건을 매수 조건에 추가
+  const handleBuyConditionsAdd = (conditions: any[]) => {
+    // 기존 매수 조건이 있으면 초기화 후 새로 채움
+    if (useBacktestConfigStore.getState().buyConditionsUI.length > 0) {
+      setBuyConditionsUI([]);
+      setBuyLogic("");
+    }
+
+    const existing = useBacktestConfigStore.getState().buyConditionsUI;
+    const makeKey = (c: any) =>
+      [
+        (c.factorName || "").toUpperCase(),
+        c.argument || "",
+        c.operator || "",
+        c.value || "",
+      ].join("|");
+    const nextConditions: any[] = [...existing];
+
+    conditions.forEach((dslCondition) => {
+      const { factor, params, operator, value, subFactorName } = dslCondition;
+      const factorName = factor;
+      const sfName = subFactorName || "기본값";
+      const arg = params && params.length > 0 ? String(params[0]) : undefined;
+      const normalized = {
+        factorName,
+        subFactorName: sfName,
+        operator: operator,
+        value: value !== null ? String(value) : "",
+        argument: arg,
+      };
+      // 동일 조건이 이미 있으면 기존 것을 제거하고 새 조건으로 덮어씀
+      const key = makeKey(normalized);
+      const dupIndex = nextConditions.findIndex((c) => makeKey(c) === key);
+      if (dupIndex >= 0) {
+        nextConditions.splice(dupIndex, 1);
+      }
+      nextConditions.push(normalized);
+    });
+
+    // ID 재할당(A,B,...) 후 스토어 반영
+    const reassigned = nextConditions.map((c, idx) => ({
+      ...c,
+      id: String.fromCharCode(65 + idx),
+    }));
+    setBuyConditionsUI(reassigned);
+
+    // 논리식: 기존에 or가 있으면 or로, 없으면 and로 재구성
+    const existingLogic = useBacktestConfigStore.getState().buy_logic || "";
+    const normalized = existingLogic.toLowerCase();
+    const op = normalized.includes(" or ") || normalized.includes("||") ? "or" : "and";
+    const logic =
+      reassigned.length >= 2
+        ? reassigned.map((c) => c.id).join(` ${op} `)
+        : reassigned.length === 1
+          ? reassigned[0].id
+          : "";
+    setBuyLogic(logic);
+  };
+
+  // AI 헬퍼에서 생성된 조건을 매도 조건에 추가
+  const handleSellConditionsAdd = (conditions: any[]) => {
+    // 기존 매도 조건이 있으면 초기화 후 새로 채움
+    if (useBacktestConfigStore.getState().sellConditionsUI.length > 0) {
+      useBacktestConfigStore.getState().setSellConditionsUI([]);
+      setConditionSell(null);
+    }
+
+    const existingSell = useBacktestConfigStore.getState().sellConditionsUI;
+    const makeKey = (c: any) =>
+      [
+        (c.factorName || "").toUpperCase(),
+        c.argument || "",
+        c.operator || "",
+        c.value || "",
+      ].join("|");
+    const nextConditions: any[] = [...existingSell];
+
+    conditions.forEach((dslCondition) => {
+      const { factor, params, operator, value, subFactorName } = dslCondition;
+      const factorName = factor;
+      const sfName = subFactorName || "기본값";
+      const arg = params && params.length > 0 ? String(params[0]) : undefined;
+      const normalized = {
+        factorName,
+        subFactorName: sfName,
+        operator: operator,
+        value: value !== null ? String(value) : "",
+        argument: arg,
+      };
+      const key = makeKey(normalized);
+      const dupIndex = nextConditions.findIndex((c) => makeKey(c) === key);
+      if (dupIndex >= 0) {
+        nextConditions.splice(dupIndex, 1);
+      }
+      nextConditions.push(normalized);
+    });
+
+    // ID 재할당(A,B,...) 후 스토어 반영
+    const reassigned = nextConditions.map((c, idx) => ({
+      ...c,
+      id: String.fromCharCode(65 + idx),
+    }));
+    useBacktestConfigStore.getState().setSellConditionsUI(reassigned);
+
+    // 논리식: 기존에 or가 있으면 or로, 없으면 and로 재구성
+    const state = useBacktestConfigStore.getState();
+    const currentConditionSell = state.condition_sell || {
+      sell_conditions: [],
+      sell_logic: "",
+      sell_price_basis: "당일 시가",
+      sell_price_offset: 0,
+    };
+    const normalized = (currentConditionSell.sell_logic || "").toLowerCase();
+    const op = normalized.includes(" or ") || normalized.includes("||") ? "or" : "and";
+    const logic =
+      reassigned.length >= 2
+        ? reassigned.map((c) => c.id).join(` ${op} `)
+        : reassigned.length === 1
+          ? reassigned[0].id
+          : "";
+
+    setConditionSell({
+      ...currentConditionSell,
+      sell_logic: logic,
+    });
+  };
+
+  // AI 헬퍼 기본 백테스트 설정 적용 (목표가/손절/보유기간 등)
+  const handleBacktestConfigApply = (config: any) => {
+    if (!config) return;
+
+    setTargetAndLoss(config.target_and_loss ?? null);
+    setHoldDays(config.hold_days ?? null);
+    setConditionSell(config.condition_sell ?? null);
+    if (config.buy_logic) setBuyLogic(config.buy_logic);
+
+    if (config.buy_price_basis) setBuyPriceBasis(config.buy_price_basis);
+    if (typeof config.buy_price_offset === "number") setBuyPriceOffset(config.buy_price_offset);
+    if (config.priority_factor) setPriorityFactor(config.priority_factor);
+    if (config.priority_order) setPriorityOrder(config.priority_order);
+    if (typeof config.per_stock_ratio === "number") setPerStockRatio(config.per_stock_ratio);
+    if (typeof config.max_holdings === "number") setMaxHoldings(config.max_holdings);
+    if (config.max_buy_value !== undefined) setMaxBuyValue(config.max_buy_value);
+    if (config.max_daily_stock !== undefined) setMaxDailyStock(config.max_daily_stock);
+    if (config.trade_targets) setTradeTargets(config.trade_targets);
+  };
+
+  return (
+    <div
+      className={`relative bg-[#FFFFFF66] h-full
+        transition-all duration-300 ease-in-out
+        ${isOpen ? "w-[26.25rem]" : "w-10"}
+      `}
+    >
+      {/* 화살표 버튼 - 항상 보이도록 고정 */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`absolute top-5 z-10 hover:opacity-70 transition-opacity
+          ${isOpen ? "left-5" : "left-1/2 -translate-x-1/2"}
+        `}
+        aria-label={isOpen ? "요약 패널 닫기" : "요약 패널 열기"}
+      >
+        <Image
+          src={isOpen ? "/icons/arrow_right.svg" : "/icons/arrow_left.svg"}
+          alt={isOpen ? "닫기" : "열기"}
+          width={24}
+          height={24}
+        />
+      </button>
+
+      {/* 요약 패널 컨텐츠 - 열린 상태에서만 표시 */}
+      {isOpen && (
+        <div className="mb-10 h-[calc(100vh-5rem)] max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden">
+          {/* 요약보기 / AI 헬퍼 탭 */}
+          <div className="h-16 border-b border-surface mb-5">
+            <div className="flex pl-16">
+              <button
+                onClick={() => setPanelMode("summary")}
+                className={`flex w-[44.5rem] h-16 justify-center items-center ${panelMode === "summary" ? "border-b-2 border-brand-purple" : ""
+                  }`}
+              >
+                <h2
+                  className={`text-xl ${panelMode === "summary"
+                    ? "font-semibold text-brand"
+                    : "font-normal text-muted"
+                    }`}
+                >
+                  요약보기
+                </h2>
+              </button>
+              <button
+                onClick={() => setPanelMode("ai_helper")}
+                className={`flex w-[44.5rem] h-16 justify-center items-center ${panelMode === "ai_helper" ? "border-b-2 border-brand-purple" : ""
+                  }`}
+              >
+                <h2
+                  className={`text-xl ${panelMode === "ai_helper"
+                    ? "font-semibold text-brand"
+                    : "font-normal text-muted"
+                    }`}
+                >
+                  AI 헬퍼
+                </h2>
+              </button>
+            </div>
+          </div>
+
+          {/* 요약보기 모드 */}
+          {panelMode === "summary" && (
+            <>
+              {/* 탭 버튼 */}
+              <div className="flex gap-3 px-4 mb-6 w-full justify-center">
+                <button
+                  onClick={() => setSelectedSummaryTab("buy")}
+                  className={`
+                px-5 py-2 rounded-md text-[1.25rem] font-semibold transition-colors
+                ${selectedSummaryTab === "buy"
+                      ? "bg-price-up text-white"
+                      : " hover:bg-surface"
+                    }
+              `}
+                >
+                  매수 조건
+                </button>
+                <button
+                  onClick={() => setSelectedSummaryTab("sell")}
+                  className={`
+                px-5 py-2 rounded-md text-[1.25rem] font-semibold transition-colors
+                ${selectedSummaryTab === "sell"
+                      ? "bg-price-down text-white"
+                      : " hover:bg-surface"
+                    }
+              `}
+                >
+                  매도 조건
+                </button>
+                <button
+                  onClick={() => setSelectedSummaryTab("target")}
+                  className={`
+                px-5 py-2 rounded-md text-[1.25rem] font-semibold transition-colors
+                ${selectedSummaryTab === "target"
+                      ? "bg-surface text-black"
+                      : " hover:bg-surface"
+                    }
+              `}
+                >
+                  매매 대상
+                </button>
+              </div>
+
+              {/* 요약 내용 */}
+              <div className="px-10 space-y-8 flex-1 min-h-0 overflow-y-auto">
+                {selectedSummaryTab === "buy" && (
+                  <>
+                    {/* 일반 조건 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="buy">일반 조건</FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <SummaryItem
+                          label="백테스트 데이터"
+                          value={is_day_or_month === "daily" ? "일봉" : "월봉"}
+                        />
+                        <SummaryItem
+                          label="투자 금액"
+                          value={`${initial_investment.toLocaleString()}만원`}
+                        />
+                        <SummaryItem
+                          label="투자 시작일"
+                          value={
+                            isMounted
+                              ? `${start_date.slice(0, 4)}.${start_date.slice(
+                                4,
+                                6,
+                              )}.${start_date.slice(6, 8)}`
+                              : ""
+                          }
+                        />
+                        <SummaryItem
+                          label="투자 종료일"
+                          value={
+                            isMounted
+                              ? `${end_date.slice(0, 4)}.${end_date.slice(
+                                4,
+                                6,
+                              )}.${end_date.slice(6, 8)}`
+                              : ""
+                          }
+                        />
+                        <SummaryItem
+                          label="수수료율"
+                          value={`${commission_rate}%`}
+                        />
+                        <SummaryItem label="슬리피지" value={`${slippage}%`} />
+                      </div>
+                    </div>
+
+                    {/* 매수 조건 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="buy">매수 조건</FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div>
+                          <div
+                            className={`text-[1rem] font-normal ${buyConditionsUI.length > 0 &&
+                              buyConditionsUI.some((c) => c.factorName)
+                              ? ""
+                              : "text-muted"
+                              }`}
+                          >
+                            매수 조건식
+                          </div>
+                          <div
+                            className={`font-semibold text-[1rem] ${buyConditionsUI.length > 0 &&
+                              buyConditionsUI.some((c) => c.factorName)
+                              ? ""
+                              : "text-muted"
+                              }`}
+                          >
+                            {buyConditionsUI.length > 0 &&
+                              buyConditionsUI.some((c) => c.factorName) ? (
+                              <div className="space-y-1">
+                                {buyConditionsUI
+                                  .filter((c) => c.factorName)
+                                  .map((c) => {
+                                    let expression = "";
+                                    if (c.subFactorName) {
+                                      expression = c.argument
+                                        ? `${c.subFactorName}({${c.factorName}},{${c.argument}})`
+                                        : `${c.subFactorName}({${c.factorName}})`;
+                                    } else {
+                                      expression = `{${c.factorName}}`;
+                                    }
+                                    return (
+                                      <div key={c.id} className="flex gap-2">
+                                        <span className="font-semibold">
+                                          {c.id}:
+                                        </span>
+                                        <span>
+                                          {expression} {c.operator} {c.value}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            ) : (
+                              "미설정"
+                            )}
+                          </div>
+                        </div>
+                        <SummaryItem
+                          label="논리 조건식"
+                          value={buy_logic || "미설정"}
+                          disabled={!buy_logic}
+                        />
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label="매수 종목 선택 우선순위"
+                            value={
+                              priority_factor
+                                ? `[${priority_order === "desc"
+                                  ? "높은 값부터"
+                                  : "낮은 값부터"
+                                }] ${priority_factor}`
+                                : "미설정"
+                            }
+                            disabled={!priority_factor}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 매수 비중 설정 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="buy">매수 비중 설정</FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <SummaryItem
+                          label="종목당 매수 비중"
+                          value={`${per_stock_ratio}%`}
+                        />
+                        <SummaryItem
+                          label="최대 보유 종목 수"
+                          value={`${max_holdings}종목`}
+                        />
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label={`종목당 최대 매수 금액 ${max_buy_value !== null ? "(활성화)" : "(비활성화)"
+                              }`}
+                            value={
+                              max_buy_value !== null
+                                ? `${max_buy_value.toLocaleString()}만원`
+                                : "0만원"
+                            }
+                            disabled={max_buy_value === null}
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label={`1일 최대 매수 종목 수 ${max_daily_stock !== null ? "(활성화)" : "(비활성화)"
+                              }`}
+                            value={
+                              max_daily_stock !== null
+                                ? `${max_daily_stock}종목`
+                                : "0종목"
+                            }
+                            disabled={max_daily_stock === null}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 매수 방법 설정 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="buy">매수 방법 설정</FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label="매수 가격 기준"
+                            value={`${buy_price_basis} 기준, ${buy_price_offset > 0 ? "+" : ""
+                              }${buy_price_offset}%`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedSummaryTab === "sell" && (
+                  <>
+                    {/* 목표가/손절가 설정 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="sell" isActive={target_and_loss !== null}>
+                        목표가 / 손절가 설정
+                      </FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <SummaryItem
+                          label="목표가"
+                          value={
+                            target_and_loss?.target_gain !== null &&
+                              target_and_loss?.target_gain !== undefined
+                              ? `${target_and_loss.target_gain}%`
+                              : "미설정"
+                          }
+                          disabled={!target_and_loss}
+                        />
+                        <SummaryItem
+                          label="손절가"
+                          value={
+                            target_and_loss?.stop_loss !== null &&
+                              target_and_loss?.stop_loss !== undefined
+                              ? `${target_and_loss.stop_loss}%`
+                              : "미설정"
+                          }
+                          disabled={!target_and_loss}
+                        />
+                      </div>
+                    </div>
+
+                    {/* 보유 기간 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="sell" isActive={hold_days !== null}>
+                        보유 기간
+                      </FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <SummaryItem
+                          label="최소 보유 기간"
+                          value={
+                            hold_days ? `${hold_days.min_hold_days}일` : "미설정"
+                          }
+                          disabled={!hold_days}
+                        />
+                        <SummaryItem
+                          label="최대 보유 기간"
+                          value={
+                            hold_days ? `${hold_days.max_hold_days}일` : "미설정"
+                          }
+                          disabled={!hold_days}
+                        />
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label="매도 가격 기준"
+                            value={
+                              hold_days
+                                ? `${hold_days.sell_price_basis} 기준, ${hold_days.sell_price_offset > 0 ? "+" : ""
+                                }${hold_days.sell_price_offset}%`
+                                : "미설정"
+                            }
+                            disabled={!hold_days}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 조건 매도 */}
+                    <div className="space-y-4">
+                      <FieldTitle tab="sell" isActive={condition_sell !== null}>
+                        조건 매도
+                      </FieldTitle>
+                      <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                        <div>
+                          <div
+                            className={`text-[1rem] font-normal ${condition_sell &&
+                              sellConditionsUI.length > 0 &&
+                              sellConditionsUI.some((c) => c.factorName)
+                              ? ""
+                              : "text-muted"
+                              }`}
+                          >
+                            매도 조건식
+                          </div>
+                          <div
+                            className={`font-semibold text-[1rem] ${condition_sell &&
+                              sellConditionsUI.length > 0 &&
+                              sellConditionsUI.some((c) => c.factorName)
+                              ? ""
+                              : "text-muted"
+                              }`}
+                          >
+                            {condition_sell &&
+                              sellConditionsUI.length > 0 &&
+                              sellConditionsUI.some((c) => c.factorName) ? (
+                              <div className="space-y-1">
+                                {sellConditionsUI
+                                  .filter((c) => c.factorName)
+                                  .map((c) => {
+                                    let expression = "";
+                                    if (c.subFactorName) {
+                                      expression = c.argument
+                                        ? `${c.subFactorName}({${c.factorName}},{${c.argument}})`
+                                        : `${c.subFactorName}({${c.factorName}})`;
+                                    } else {
+                                      expression = `{${c.factorName}}`;
+                                    }
+                                    return (
+                                      <div key={c.id} className="flex gap-2">
+                                        <span className="font-semibold">
+                                          {c.id}:
+                                        </span>
+                                        <span>
+                                          {expression} {c.operator} {c.value}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            ) : (
+                              "미설정"
+                            )}
+                          </div>
+                        </div>
+                        <SummaryItem
+                          label="논리 조건식"
+                          value={condition_sell?.sell_logic || "미설정"}
+                          disabled={!condition_sell?.sell_logic}
+                        />
+                        <div className="col-span-2">
+                          <SummaryItem
+                            label="매도 가격 기준"
+                            value={
+                              condition_sell
+                                ? `${condition_sell.sell_price_basis} 기준, ${condition_sell.sell_price_offset > 0 ? "+" : ""
+                                }${condition_sell.sell_price_offset}%`
+                                : "미설정"
+                            }
+                            disabled={!condition_sell?.sell_price_basis}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {selectedSummaryTab === "target" && (
+                  <>
+                    {/* 매매 대상 */}
+                    <div className="space-y-7">
+                      {/* 종목 개수 표시 */}
+                      <div className="space-y-5">
+                        <FieldTitle tab="target">매매 대상 종목</FieldTitle>
+                        {trade_targets.total_stock_count !== undefined && (
+                          <div className="space-y-5">
+                            <div className="flex flex-col gap-1">
+                              <span>선택한 매매 대상 종목</span>
+                              <span className="font-semibold">
+                                {trade_targets.selected_stock_count || 0} 종목
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <span>전체 종목</span>
+                              <span className="font-semibold">
+                                {trade_targets.total_stock_count} 종목
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-5">
+                        <FieldTitle tab="target">선택한 테마</FieldTitle>
+                        <div className="flex gap-[6.5625rem]">
+                          <div className="flex flex-col gap-1">
+                            <span>선택한 테마 수</span>
+                            <span className="font-semibold">
+                              {trade_targets.selected_themes.length}개
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <span>전체 테마 수</span>
+                            <span className="font-semibold">29개</span>
+                          </div>
+                        </div>
+                        {trade_targets.selected_themes.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {trade_targets.selected_themes.map((theme, index) => (
+                              <div key={index} className="text-sm ">
+                                {theme}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm ">선택 안 함</div>
+                        )}
+                      </div>
+                      <div className="space-y-5">
+                        <FieldTitle tab="target">
+                          선택한 세부 종목 ({trade_targets.selected_stocks.length}
+                          개)
+                        </FieldTitle>
+                        {trade_targets.selected_stocks.length > 0 ? (
+                          <ul className="list-disc list-inside text-sm  space-y-1">
+                            {trade_targets.selected_stocks.map((stock, index) => (
+                              <li key={index}>{stock}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-sm ">선택 안 함</div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* AI 헬퍼 모드 */}
+          {panelMode === "ai_helper" && (
+            <div className="flex-1 min-h-0">
+              <AIHelperSidebar
+                onBuyConditionsAdd={handleBuyConditionsAdd}
+                onSellConditionsAdd={handleSellConditionsAdd}
+                onBacktestConfigApply={handleBacktestConfigApply}
+                onResetConditions={resetConditionsFromHelper}
+                currentBuyConditions={buyConditionsUI}
+                currentSellConditions={sellConditionsUI}
+                onConditionsApplied={() => setPanelMode("summary")}
+              />
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * 1. 필드 제목 컴포넌트
+ * - 일반 조건, 매수 조건, 매수 비중 설정 등의 큰 섹션 제목
+ */
+interface FieldTitleProps {
+  children: React.ReactNode;
+  tab: "buy" | "sell" | "target";
+  isActive?: boolean; // 매도 조건 탭에서 활성화 여부
+}
+
+function FieldTitle({ children, tab, isActive = true }: FieldTitleProps) {
+  let colorClass = "";
+
+  if (tab === "buy") {
+    colorClass = "text-price-up";
+  } else if (tab === "sell") {
+    colorClass = isActive ? "text-price-down" : "text-black";
+  } else {
+    // target 탭은 색상 없음 (기본 text-strong)
+    colorClass = "";
+  }
+
+  return (
+    <h3 className={`font-semibold text-[1.25rem] ${colorClass}`}>{children}</h3>
+  );
+}
+
+/**
+ * 2. 세부 항목 제목 컴포넌트
+ * - 백테스트 데이터, 투자금액, 매수 조건식 등의 항목 레이블
+ */
+interface ItemLabelProps {
+  children: React.ReactNode;
+  disabled?: boolean;
+}
+
+function ItemLabel({ children, disabled = false }: ItemLabelProps) {
+  return (
+    <div className={`font-normal text-[1rem] ${disabled ? "text-muted" : ""}`}>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * 3. 세부 항목 내용 컴포넌트
+ * - 일봉, 5000만원 등의 실제 값
+ */
+interface ItemValueProps {
+  children: React.ReactNode;
+  disabled?: boolean;
+}
+
+function ItemValue({ children, disabled = false }: ItemValueProps) {
+  return (
+    <div
+      className={`font-semibold text-[1rem] ${disabled ? "text-muted" : ""}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * 요약 항목 컴포넌트 (label-value 쌍)
+ * - ItemLabel과 ItemValue를 조합한 편의 컴포넌트
+ */
+interface SummaryItemProps {
+  label: string;
+  value: string;
+  disabled?: boolean;
+}
+
+function SummaryItem({ label, value, disabled = false }: SummaryItemProps) {
+  return (
+    <div>
+      <ItemLabel disabled={disabled}>{label}</ItemLabel>
+      <ItemValue disabled={disabled}>{value}</ItemValue>
+    </div>
+  );
+}

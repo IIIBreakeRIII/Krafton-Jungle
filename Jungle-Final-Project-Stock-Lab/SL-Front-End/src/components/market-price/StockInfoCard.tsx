@@ -1,0 +1,490 @@
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import { Icon } from "@/components/common/Icon";
+import { type CompanyInfoResponse, companyApi } from "@/lib/api/company";
+import { StockPriceChart } from "./StockPriceChart";
+
+interface StockInfoCardProps {
+  name: string;
+  code: string;
+}
+
+const periodTabs = ["30일", "90일", "180일", "1년", "2년", "3년"];
+
+/**
+ * 기간 텍스트를 일 단위 숫자로 변환
+ */
+function periodToDays(period: string): number {
+  if (period.includes("년")) {
+    const years = parseInt(period, 10);
+    return years * 365;
+  }
+  return parseInt(period, 10);
+}
+
+export function StockInfoCard({ name, code }: StockInfoCardProps) {
+  const [activePeriod, setActivePeriod] = useState(periodTabs[0]);
+  const [companyData, setCompanyData] = useState<CompanyInfoResponse | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCompanyInfo = async () => {
+      try {
+        setLoading(true);
+        const data = await companyApi.getCompanyInfo(code);
+        setCompanyData(data);
+      } catch (error) {
+        console.error("종목 정보 조회 실패:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompanyInfo();
+  }, [code]);
+
+  if (loading || !companyData) {
+    return <StockInfoSkeleton />;
+  }
+
+  const { basicInfo, investmentIndicators } = companyData;
+
+  // 가격 변동 통계 계산
+  const changeStats = [
+    {
+      label: "일주일 전",
+      value: basicInfo.changevs1w
+        ? `${basicInfo.changevs1w > 0 ? "+" : ""}${basicInfo.changevs1w.toLocaleString()}원 (${basicInfo.changeRate1w?.toFixed(2) || 0}%)`
+        : "-",
+    },
+    {
+      label: "30일 전",
+      value: basicInfo.changevs1m
+        ? `${basicInfo.changevs1m > 0 ? "+" : ""}${basicInfo.changevs1m.toLocaleString()}원 (${basicInfo.changeRate1m?.toFixed(2) || 0}%)`
+        : "-",
+    },
+    {
+      label: "60일 전",
+      value: basicInfo.changevs2m
+        ? `${basicInfo.changevs2m > 0 ? "+" : ""}${basicInfo.changevs2m.toLocaleString()}원 (${basicInfo.changeRate2m?.toFixed(2) || 0}%)`
+        : "-",
+    },
+  ];
+
+  // 시가총액 포맷팅 (1조 미만이면 억 단위만 표시)
+  const formatMarketCap = (marketCap: number): string => {
+    const trillion = Math.floor(marketCap / 1000000000000);
+    const billion = Math.floor((marketCap % 1000000000000) / 100000000);
+
+    if (trillion > 0) {
+      return `${trillion}조 ${billion}억원`;
+    }
+    return `${billion}억원`;
+  };
+
+  // PSR 계산 (API에서 안 오면 계산)
+  const calculatePSR = (): number | null => {
+    if (investmentIndicators.psr) {
+      return investmentIndicators.psr;
+    }
+    // Fallback: 시가총액 / 최근 분기 매출액으로 계산
+    if (basicInfo.marketCap && companyData.quarterlyPerformance?.[0]?.revenue) {
+      const revenue = companyData.quarterlyPerformance[0].revenue;
+      if (revenue && revenue !== 0) {
+        return basicInfo.marketCap / revenue;
+      }
+    }
+    return null;
+  };
+
+  // PBR 계산 (API에서 안 오면 계산)
+  const calculatePBR = (): number | null => {
+    if (investmentIndicators.pbr) {
+      return investmentIndicators.pbr;
+    }
+    // Fallback: 시가총액 / 자본총계로 계산
+    if (basicInfo.marketCap && companyData.balanceSheets?.[0]?.totalEquity) {
+      const totalEquity = companyData.balanceSheets[0].totalEquity;
+      if (totalEquity && totalEquity !== 0) {
+        return basicInfo.marketCap / totalEquity;
+      }
+    }
+    return null;
+  };
+
+  // 개요 통계
+  const overviewStats = [
+    {
+      label: "시가총액",
+      value: basicInfo.marketCap ? formatMarketCap(basicInfo.marketCap) : "-",
+    },
+    {
+      label: "PSR",
+      value: (() => {
+        const psr = calculatePSR();
+        return psr ? `${psr.toFixed(2)}배` : "-";
+      })(),
+    },
+    {
+      label: "PBR",
+      value: (() => {
+        const pbr = calculatePBR();
+        return pbr ? `${pbr.toFixed(2)}배` : "-";
+      })(),
+    },
+  ];
+
+  const dailyChangeRateRaw =
+    basicInfo.changeRate1d ?? basicInfo.fluctuationRate ?? null;
+  const formattedDailyChangeRate =
+    dailyChangeRateRaw !== null && dailyChangeRateRaw !== undefined
+      ? dailyChangeRateRaw.toFixed(2)
+      : "0.00";
+
+  return (
+    <article className="flex flex-col w-full gap-4 sm:gap-5 bg-white p-4 sm:p-6 md:p-8 text-strong">
+      <header className="text-start">
+        <p className="text-[0.75rem] font-normal text-muted">
+          {basicInfo.marketType || "코스피"} | {code}
+        </p>
+        <h2 className="text-[1.5rem] font-semibold">{name}</h2>
+        <div className="mt-[-0.5rem] text-[1.5rem] font-semibold">
+          {basicInfo.currentPrice
+            ? `${basicInfo.currentPrice.toLocaleString()}원`
+            : "-"}
+        </div>
+        <p
+          className={`font-semibold ${(basicInfo.changevs1d || 0) > 0
+            ? "text-price-up"
+            : (basicInfo.changevs1d || 0) < 0
+              ? "text-price-down"
+              : "text-text-muted"
+            }`}
+        >
+          {basicInfo.changevs1d
+            ? `${basicInfo.changevs1d > 0 ? "+" : ""}${basicInfo.changevs1d.toLocaleString()}원 (${formattedDailyChangeRate}%)`
+            : `0원 (${formattedDailyChangeRate}%)`}
+        </p>
+        <p className="pt-[0.25rem] text-[0.75rem] text-muted font-normal">
+          {basicInfo.tradeDate
+            ? new Date(basicInfo.tradeDate).toLocaleDateString("ko-KR", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+            : "-"}{" "}
+          기준
+        </p>
+      </header>
+      {/* 기간 선택 탭 - 반응형 */}
+      <div className="flex flex-wrap justify-center gap-1 sm:gap-2">
+        {periodTabs.map((tab) => {
+          const isActive = tab === activePeriod;
+          return (
+            <button
+              key={tab}
+              type="button"
+              className={[
+                "rounded-full px-3 py-2 text-sm sm:text-base font-normal transition",
+                "min-h-[2.75rem] sm:min-h-0",
+                isActive
+                  ? "bg-brand-purple text-white font-semibold"
+                  : "text-muted font-normal",
+              ].join(" ")}
+              onClick={() => setActivePeriod(tab)}
+            >
+              {tab}
+            </button>
+          );
+        })}
+      </div>
+      <StockPriceChart
+        data={companyData.priceHistory}
+        period={periodToDays(activePeriod)}
+        isRising={(basicInfo.changevs1d || 0) >= 0}
+      />
+      <Divider />
+      <p className="text-[1.25rem] text-start font-semibold">
+        주가가 일주일 전에 비해{" "}
+        <span
+          className={
+            changeStats[0].value.includes("+")
+              ? "text-price-up"
+              : "text-price-down"
+          }
+        >
+          {changeStats[0].value.match(/[-+]?[0-9,.]+%/gu)?.[0] ?? "-"}
+        </span>{" "}
+        {changeStats[0].value.includes("+") ? "증가했어요 😊" : "감소했어요 🥲"}
+      </p>
+      {/* 가격 변동 통계 그리드 - 반응형 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3">
+        {changeStats.map((stat) => {
+          const isPositive = stat.value.includes("+");
+          const valueColor = isPositive ? "text-price-up" : "text-price-down";
+
+          return (
+            <div
+              key={stat.label}
+              className="flex flex-col gap-1 text-center p-2 sm:p-0 rounded-lg sm:rounded-none bg-gray-50 sm:bg-transparent"
+            >
+              <span className="text-sm font-normal text-muted">{stat.label}</span>
+              <span className={`text-base sm:text-lg font-semibold ${valueColor}`}>
+                {stat.value}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <Divider />
+      <section>
+        <SectionHeader
+          title="개요"
+          helper={
+            <span className="group relative inline-flex items-center">
+              <Icon
+                src="/icons/help.svg"
+                alt="도움말"
+                size={20}
+                color="#C8C8C8"
+                className="cursor-help"
+              />
+              <span className="pointer-events-none absolute left-full top-1/2 z-10 -translate-y-1/2 translate-x-2 whitespace-nowrap rounded-full bg-[#f0f0f0] px-5 pt-1.5 pb-1 text-[0.75rem] text-black leading-[1.25] opacity-0 transition-all duration-200 ease-out group-hover:translate-x-3 group-hover:opacity-100">
+                시가총액 : 회사의 규모 <br />
+                PSR : 회사가 돈을 잘 버는지 알려주는 지수, 시가총액 / 매출액 <br />
+                PBR : 회사가 갖고있는 돈에 대해 알려주는 지수, 주가 / 주당순자산가치
+              </span>
+            </span>
+          }
+        />
+        <p className="pt-[0.25rem] text-[0.75rem] font-normal text-muted">
+          {basicInfo.industry || "산업 정보 없음"}
+        </p>
+        {/* 개요 통계 그리드 - 반응형 */}
+        <div className="pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {overviewStats.map((stat) => {
+            return (
+              <div
+                key={stat.label}
+                className="flex flex-col gap-1 text-center p-2 sm:p-0 rounded-lg sm:rounded-none bg-gray-50 sm:bg-transparent"
+              >
+                <p className="text-xs font-normal text-muted">
+                  {stat.label}
+                </p>
+                <p className="text-base sm:text-lg font-semibold text-strong">
+                  {stat.value}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <Divider />
+      <section className="pt-[1rem]">
+        <SectionHeader
+          title="수급점수"
+          helper={
+            <span className="group relative inline-flex items-center">
+              <Icon
+                src="/icons/help.svg"
+                alt="도움말"
+                size={20}
+                color="#C8C8C8"
+                className="cursor-help"
+              />
+              <span className="pointer-events-none absolute left-full top-1/2 z-10 -translate-y-1/2 translate-x-2 whitespace-nowrap rounded-full bg-[#f0f0f0] px-5 pt-1.5 pb-1 text-[0.75rem] text-black leading-[1.25] opacity-0 transition-all duration-200 ease-out group-hover:translate-x-3 group-hover:opacity-100">
+                외국인과 기관의 수급 강도를 점수화한 것<br />
+                점수가 높을수록 최근 수급이 상대적으로 강해졌다는 의미
+              </span>
+            </span>
+          }
+        />
+        <p className="pt-[0.25rem] text-[0.8rem] font-normal text-text-muted">
+          수급점수는 준비 중입니다.
+        </p>
+      </section>
+    </article>
+  );
+}
+
+/**
+ * 반응형 구분선 컴포넌트
+ * 모바일: -1rem margin, 데스크톱: -2rem margin으로 전체 너비 확장
+ */
+function Divider() {
+  return (
+    <div
+      className={[
+        "h-4 my-2 bg-[#F8F8F8]",
+        // 모바일: -1rem (p-4에 맞춤), 데스크톱: -2rem (p-8에 맞춤)
+        "-mx-4 sm:-mx-6 md:-mx-8",
+        // calc로 전체 너비 확장
+        "w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] md:w-[calc(100%+4rem)]",
+      ].join(" ")}
+    />
+  );
+}
+
+interface SectionHeaderProps {
+  title: string;
+  helper?: ReactNode;
+}
+
+function SectionHeader({ title, helper }: SectionHeaderProps) {
+  const helperNode =
+    typeof helper === "string" ? (
+      <span className="text-sm text-[#A0A0A0]">{helper}</span>
+    ) : (
+      helper
+    );
+
+  return (
+    <div className="flex items-center gap-2">
+      <h3 className="text-[1.25rem] font-semibold text-[#000000]">{title}</h3>
+      {helper ? helperNode : null}
+    </div>
+  );
+}
+
+interface CardProps {
+  title: string;
+  value: string;
+  caption?: string;
+}
+
+function _Card({ title, value, caption }: CardProps) {
+  return (
+    <div className="rounded-[8px] border border-border py-[1rem] pl-[1rem] text-start">
+      <p className="text-[0.9rem] font-normal text-text-muted">{title}</p>
+      <p className="pt-[0.5rem] text-[1.5rem] font-semibold text-text-strong">
+        {value}
+      </p>
+      {caption && (
+        <p className="pt-[0.25rem] text-[0.9rem] font-normal text-text-muted">
+          {caption}
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface DiagnosisCircleProps {
+  score: number;
+  delta: number;
+}
+
+function _DiagnosisCircle({ score, delta }: DiagnosisCircleProps) {
+  const circumference = 2 * Math.PI * 60;
+  const progress = (score / 100) * circumference;
+
+  return (
+    <div className="relative h-[12rem] w-[12rem]">
+      <svg viewBox="0 0 160 160" className="h-full w-full">
+        <circle
+          cx="80"
+          cy="80"
+          r="60"
+          fill="none"
+          stroke="#C8C8C8"
+          strokeWidth="10"
+        />
+        <circle
+          cx="80"
+          cy="80"
+          r="60"
+          fill="none"
+          stroke="#FF6464"
+          strokeWidth="10"
+          strokeDasharray={`${progress} ${circumference - progress}`}
+          strokeLinecap="round"
+          transform="rotate(-90 80 80)"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <p className="text-[0.8rem] font-normal text-text-muted">종합점수</p>
+        <p className="text-[1.8rem] font-semibold text-text-strong">
+          {score}점
+        </p>
+        <p className="text-[0.8rem] font-normal text-text-muted">
+          전일 대비 {delta}점
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 스켈레톤 UI - 반응형 로딩 표시
+ * 실제 콘텐츠와 동일한 반응형 레이아웃 적용
+ */
+function StockInfoSkeleton() {
+  return (
+    <article className="flex flex-col gap-4 sm:gap-5 bg-white p-4 sm:p-6 md:p-8 text-text-strong w-full">
+      {/* 헤더 스켈레톤 */}
+      <header className="text-start">
+        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2" />
+        <div className="h-8 w-48 bg-gray-300 rounded animate-pulse mb-2" />
+        <div className="h-8 w-40 bg-gray-300 rounded animate-pulse mb-1" />
+        <div className="h-6 w-36 bg-gray-200 rounded animate-pulse mb-1" />
+        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+      </header>
+
+      {/* 기간 탭 스켈레톤 - 반응형 */}
+      <div className="flex flex-wrap justify-center gap-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-11 sm:h-8 w-14 sm:w-16 bg-gray-200 rounded-full animate-pulse"
+          />
+        ))}
+      </div>
+
+      {/* 그래프 스켈레톤 */}
+      <div className="h-32 w-full bg-gray-100 rounded animate-pulse" />
+
+      <Divider />
+
+      {/* 주가 변동 텍스트 스켈레톤 */}
+      <div className="h-6 w-full max-w-xs bg-gray-200 rounded animate-pulse" />
+
+      {/* 가격 변동 통계 스켈레톤 - 반응형 */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex flex-col gap-1 items-center p-2 sm:p-0 rounded-lg sm:rounded-none bg-gray-50 sm:bg-transparent">
+            <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+            <div className="h-6 w-32 bg-gray-300 rounded animate-pulse" />
+          </div>
+        ))}
+      </div>
+
+      <Divider />
+
+      {/* 개요 스켈레톤 */}
+      <section className="rounded-lg">
+        <div className="h-7 w-24 bg-gray-300 rounded animate-pulse mb-2" />
+        <div className="h-4 w-full max-w-xs bg-gray-200 rounded animate-pulse mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-1 items-center p-2 sm:p-0 rounded-lg sm:rounded-none bg-gray-50 sm:bg-transparent">
+              <div className="h-4 w-16 bg-gray-200 rounded animate-pulse" />
+              <div className="h-6 w-24 bg-gray-300 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* 수급점수 스켈레톤 */}
+      <section className="pt-4">
+        <div className="h-7 w-32 bg-gray-300 rounded animate-pulse mb-2" />
+        <div className="h-4 w-full max-w-xs bg-gray-200 rounded animate-pulse" />
+      </section>
+    </article>
+  );
+}

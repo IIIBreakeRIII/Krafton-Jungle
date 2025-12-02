@@ -1,0 +1,18 @@
+# Chatbot Configuration
+
+llm:
+  provider: "bedrock"
+  model: "global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+  # Optional: set an inference profile ARN/ID when the model requires provisioned throughput
+  inference_profile_id: "arn:aws:bedrock:ap-northeast-2:749559064959:inference-profile/global.anthropic.claude-sonnet-4-5-20250929-v1:0"
+  temperature: 0.7
+  max_tokens: 8000
+  region: "ap-northeast-2"
+
+conversation:
+  max_history: 10
+  session_timeout: 3600 # seconds
+
+backend:
+  api_url: "http://localhost:8000"
+  timeout: 30

@@ -1,0 +1,402 @@
+"use client";
+
+import * as am5 from "@amcharts/amcharts5";
+import * as am5percent from "@amcharts/amcharts5/percent";
+import am5themes_Animated from "@amcharts/amcharts5/themes/Animated";
+import * as am5xy from "@amcharts/amcharts5/xy";
+import { useEffect, useRef } from "react";
+import type { BacktestResult } from "@/types/api";
+
+/**
+ * 매매 결과 통계 탭 컴포넌트
+ * - 주요 통계 지표 표시
+ * - 매매 성공률, 유니버스별 비중, 매도 조건별 비중 차트 (amcharts5)
+ */
+interface StatisticsTabProps {
+  statistics: BacktestResult["statistics"];
+}
+
+export function StatisticsTab({ statistics }: StatisticsTabProps) {
+  // 실제 통계 데이터 기반 계산
+  const winRate = statistics.winRate || 0;
+  const loseRate = 100 - winRate;
+
+  // 차트 데이터 - 실제 데이터 기반
+  const successRateData = [
+    { name: "수익 거래", value: winRate, color: 0x3b82f6 },
+    { name: "손실 거래", value: loseRate, color: 0xff4d6d },
+  ];
+
+  // TODO: 실제 유니버스별 비중 데이터가 있으면 대체
+  const universeData = [
+    { name: "코스피", value: 60, color: 0x3b82f6 },
+    { name: "코스닥", value: 40, color: 0xa855f7 },
+  ];
+
+  // TODO: 실제 매도 조건별 비중 데이터가 있으면 대체
+  const sellConditionData = [
+    { name: "목표가", value: 40, color: 0x10b981 },
+    { name: "손절가", value: 30, color: 0xf59e0b },
+    { name: "보유기간", value: 20, color: 0x8b5cf6 },
+    { name: "기타", value: 10, color: 0x06b6d4 },
+  ];
+
+  return (
+    <div className="bg-bg-surface rounded-lg shadow-card p-6">
+      <h3 className="text-lg font-bold text-text-strong mb-6">
+        매매 결과 통계
+      </h3>
+
+      {/* 통계 지표 그리드 - 실제 데이터 */}
+      <div className="grid grid-cols-3 gap-8 mb-12">
+        {/* 왼쪽 섹션 */}
+        <div className="space-y-6">
+          <StatItem
+            label="총 거래 횟수"
+            value={`${statistics.totalTrades}회`}
+          />
+          <StatItem
+            label="승리 거래"
+            value={`${statistics.winningTrades}회`}
+            valueColor="text-red-500"
+          />
+          <StatItem
+            label="패배 거래"
+            value={`${statistics.losingTrades}회`}
+            valueColor="text-blue-500"
+          />
+          <StatItem
+            label="Sharpe Ratio"
+            value={statistics.sharpeRatio.toFixed(2)}
+          />
+          <StatItem
+            label="변동성"
+            value={`${(statistics.volatility * 100).toFixed(2)}%`}
+          />
+        </div>
+
+        {/* 중간 섹션 */}
+        <div className="space-y-6">
+          <StatItem
+            label="승률"
+            value={`${statistics.winRate.toFixed(2)}%`}
+            valueColor="text-red-500"
+          />
+          <StatItem
+            label="손익비 (Profit Factor)"
+            value={statistics.profitFactor.toFixed(2)}
+          />
+          <StatItem
+            label="최대 낙폭 (MDD)"
+            value={`${Math.abs(statistics.maxDrawdown).toFixed(2)}%`}
+            valueColor="text-text-strong"
+          />
+          <StatItem
+            label="연 환산 수익률"
+            value={`${statistics.annualizedReturn.toFixed(2)}%`}
+            valueColor={
+              statistics.annualizedReturn >= 0
+                ? "text-red-500"
+                : "text-blue-500"
+            }
+          />
+          <StatItem
+            label="총 수익률"
+            value={`${statistics.totalReturn.toFixed(2)}%`}
+            valueColor={
+              statistics.totalReturn >= 0 ? "text-red-500" : "text-blue-500"
+            }
+          />
+        </div>
+
+        {/* 오른쪽 섹션 */}
+        <div className="space-y-6">
+          <StatItem
+            label="초기 자본"
+            value={`${statistics.initialCapital.toLocaleString()}원`}
+          />
+          <StatItem
+            label="최종 자본"
+            value={`${Math.round(statistics.finalCapital).toLocaleString()}원`}
+            valueColor={
+              statistics.finalCapital >= statistics.initialCapital
+                ? "text-red-500"
+                : "text-blue-500"
+            }
+          />
+          <StatItem
+            label="순손익"
+            value={`${Math.round(statistics.finalCapital - statistics.initialCapital).toLocaleString()}원`}
+            valueColor={
+              statistics.finalCapital >= statistics.initialCapital
+                ? "text-red-500"
+                : "text-blue-500"
+            }
+          />
+          <StatItem
+            label="평균 거래당 수익"
+            value={
+              statistics.totalTrades > 0
+                ? `${Math.round((statistics.finalCapital - statistics.initialCapital) / statistics.totalTrades).toLocaleString()}원`
+                : "0원"
+            }
+          />
+          <StatItem
+            label="수익률 / MDD"
+            value={
+              statistics.maxDrawdown !== 0
+                ? (
+                    statistics.totalReturn / Math.abs(statistics.maxDrawdown)
+                  ).toFixed(2)
+                : "N/A"
+            }
+          />
+        </div>
+      </div>
+
+      {/* 차트 섹션 */}
+      <div className="grid grid-cols-3 gap-6">
+        {/* 매매 성공률 차트 */}
+        <div>
+          <h4 className="text-base font-semibold text-text-strong mb-4">
+            매매 성공률
+          </h4>
+          <SuccessRateChart data={successRateData} />
+        </div>
+
+        {/* 유니버스별 매수 비중 */}
+        <div>
+          <h4 className="text-base font-semibold text-text-strong mb-4">
+            유니버스별 매수 비중
+          </h4>
+          <UniversePieChart data={universeData} />
+        </div>
+
+        {/* 매도 조건별 비중 */}
+        <div>
+          <h4 className="text-base font-semibold text-text-strong mb-4">
+            매도 조건별 비중
+          </h4>
+          <SellConditionPieChart data={sellConditionData} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 통계 지표 아이템 컴포넌트
+ */
+function StatItem({
+  label,
+  value,
+  valueColor = "text-text-strong",
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+}) {
+  return (
+    <div>
+      <div className={`text-2xl font-bold ${valueColor} mb-1`}>{value}</div>
+      <div className="text-sm text-text-body">{label}</div>
+    </div>
+  );
+}
+
+/**
+ * 매매 성공률 바 차트 (amcharts5)
+ */
+function SuccessRateChart({
+  data,
+}: {
+  data: Array<{ name: string; value: number; color: number }>;
+}) {
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    const root = am5.Root.new(chartRef.current);
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(
+      am5xy.XYChart.new(root, {
+        panX: false,
+        panY: false,
+        wheelX: "none",
+        wheelY: "none",
+      }),
+    );
+
+    // X축 (카테고리)
+    const xAxis = chart.xAxes.push(
+      am5xy.CategoryAxis.new(root, {
+        categoryField: "name",
+        renderer: am5xy.AxisRendererX.new(root, {
+          minGridDistance: 20,
+        }),
+      }),
+    );
+    xAxis.data.setAll(data);
+
+    // Y축 (값)
+    const yAxis = chart.yAxes.push(
+      am5xy.ValueAxis.new(root, {
+        renderer: am5xy.AxisRendererY.new(root, {}),
+      }),
+    );
+
+    // 바 시리즈
+    const series = chart.series.push(
+      am5xy.ColumnSeries.new(root, {
+        name: "매매 성공률",
+        xAxis: xAxis,
+        yAxis: yAxis,
+        valueYField: "value",
+        categoryXField: "name",
+        tooltip: am5.Tooltip.new(root, {
+          labelText: "{categoryX}: {valueY}%",
+        }),
+      }),
+    );
+
+    // 색상 적용
+    series.columns.template.adapters.add("fill", (fill, target) => {
+      const dataItem = target.dataItem;
+      if (dataItem) {
+        const index = data.findIndex(
+          (d) => d.name === (dataItem as any).get("categoryX"),
+        );
+        if (index !== -1) {
+          return am5.color(data[index].color);
+        }
+      }
+      return fill;
+    });
+
+    series.data.setAll(data);
+
+    return () => {
+      root.dispose();
+    };
+  }, [data]);
+
+  return <div ref={chartRef} className="w-full h-[200px]" />;
+}
+
+/**
+ * 유니버스별 파이 차트 (amcharts5)
+ */
+function UniversePieChart({
+  data,
+}: {
+  data: Array<{ name: string; value: number; color: number }>;
+}) {
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    const root = am5.Root.new(chartRef.current);
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(
+      am5percent.PieChart.new(root, {
+        layout: root.verticalLayout,
+      }),
+    );
+
+    const series = chart.series.push(
+      am5percent.PieSeries.new(root, {
+        valueField: "value",
+        categoryField: "name",
+      }),
+    );
+
+    // 색상 적용
+    series.slices.template.adapters.add("fill", (fill, target) => {
+      const dataItem = target.dataItem;
+      if (dataItem) {
+        const category = (dataItem as any).get("category");
+        const item = data.find((d) => d.name === category);
+        if (item) {
+          return am5.color(item.color);
+        }
+      }
+      return fill;
+    });
+
+    // 레이블 설정
+    series.labels.template.setAll({
+      text: "{category} {valuePercentTotal.formatNumber('#.0')}%",
+      fontSize: 12,
+    });
+
+    series.data.setAll(data);
+
+    return () => {
+      root.dispose();
+    };
+  }, [data]);
+
+  return <div ref={chartRef} className="w-full h-[200px]" />;
+}
+
+/**
+ * 매도 조건별 파이 차트 (amcharts5)
+ */
+function SellConditionPieChart({
+  data,
+}: {
+  data: Array<{ name: string; value: number; color: number }>;
+}) {
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+    const root = am5.Root.new(chartRef.current);
+    root.setThemes([am5themes_Animated.new(root)]);
+
+    const chart = root.container.children.push(
+      am5percent.PieChart.new(root, {
+        layout: root.verticalLayout,
+      }),
+    );
+
+    const series = chart.series.push(
+      am5percent.PieSeries.new(root, {
+        valueField: "value",
+        categoryField: "name",
+      }),
+    );
+
+    // 색상 적용
+    series.slices.template.adapters.add("fill", (fill, target) => {
+      const dataItem = target.dataItem;
+      if (dataItem) {
+        const category = (dataItem as any).get("category");
+        const item = data.find((d) => d.name === category);
+        if (item) {
+          return am5.color(item.color);
+        }
+      }
+      return fill;
+    });
+
+    // 레이블 설정
+    series.labels.template.setAll({
+      text: "{category} {valuePercentTotal.formatNumber('#.0')}%",
+      fontSize: 12,
+    });
+
+    series.data.setAll(data);
+
+    return () => {
+      root.dispose();
+    };
+  }, [data]);
+
+  return <div ref={chartRef} className="w-full h-[200px]" />;
+}
